@@ -8,7 +8,7 @@ export function FamilyConstellation({ theme = 'caregiver' }: { theme?: ThemeName
   const secondary = theme === 'caregiver' ? '#7B87E8' : '#D58B58';
 
   return (
-    <View accessible={false} style={styles.constellation}>
+    <View accessible={false} accessibilityElementsHidden aria-hidden={true} style={styles.constellation}>
       <View style={[styles.line, { backgroundColor: secondary }]} />
       <View style={[styles.node, styles.centerNode, { backgroundColor: accent, borderColor: tokens.colors.surface }]} />
       <View style={[styles.node, styles.leftNode, { backgroundColor: secondary, borderColor: tokens.colors.surface }]} />

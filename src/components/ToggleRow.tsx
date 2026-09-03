@@ -35,8 +35,10 @@ export function ToggleRow({
       onPress={() => onValueChange(!value)}
       style={({ pressed, focused }) => [
         styles.row,
-        focused && { borderColor: caregiverTheme.colors.text, borderRadius: 8, borderWidth: 2 },
-        { opacity: pressed ? 0.7 : 1 },
+        {
+          borderColor: focused ? caregiverTheme.colors.text : 'transparent',
+          opacity: pressed ? 0.7 : 1,
+        },
       ]}
     >
       <View style={styles.copy}>
@@ -49,7 +51,7 @@ export function ToggleRow({
         aria-hidden={true}
         style={[styles.switchVisual, { backgroundColor: value ? '#AEB7F5' : caregiverTheme.colors.border }]}
       >
-        <View style={[styles.switchThumb, value && styles.switchThumbOn, { backgroundColor: value ? caregiverTheme.colors.primary : '#FFFFFF' }]} />
+        <View style={[styles.switchThumb, value && styles.switchThumbOn, { backgroundColor: value ? caregiverTheme.colors.primary : caregiverTheme.colors.white }]} />
       </View>
     </FocusablePressable>
   );
@@ -58,9 +60,12 @@ export function ToggleRow({
 const styles = StyleSheet.create({
   row: {
     alignItems: 'center',
+    borderRadius: 8,
+    borderWidth: 2,
     flexDirection: 'row',
     gap: spacing.sm,
     minHeight: 64,
+    paddingHorizontal: spacing.xxs,
     paddingVertical: spacing.xs,
   },
   copy: {

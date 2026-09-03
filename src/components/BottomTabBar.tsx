@@ -20,8 +20,8 @@ export function BottomTabBar({
   const isPatient = role === 'patient';
 
   return (
-    <SafeAreaView edges={['bottom']} style={[styles.safeArea, { backgroundColor: theme.colors.surface }]}>
-      <View style={[styles.bar, { borderTopColor: theme.colors.border }]}>
+    <SafeAreaView edges={['bottom']} style={[styles.safeArea, { backgroundColor: theme.colors.surface, borderTopColor: theme.colors.border }]}>
+      <View style={styles.bar}>
         {tabs.map((tab) => {
           const isActive = tab.route === activeRoute;
           return (
