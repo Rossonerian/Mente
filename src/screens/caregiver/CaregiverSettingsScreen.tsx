@@ -7,6 +7,7 @@ import { MenteIcon } from '../../components/Icon';
 import { PageHeader } from '../../components/PageHeader';
 import { ScreenScroll } from '../../components/Screen';
 import { ToggleRow } from '../../components/ToggleRow';
+import { GlassSurface } from '../../components/glass/GlassSurface';
 import { caregiverTheme, spacing } from '../../theme/tokens';
 import { menteMockData } from '../../data/mockData';
 
@@ -25,7 +26,7 @@ export function CaregiverSettingsScreen({ onOpenSetup, onSwitchRole }: { onOpenS
         theme="caregiver"
       />
 
-      <SurfaceCard theme="caregiver" style={styles.settingsCard}>
+      <GlassSurface theme="caregiver" variant="elevated" style={styles.settingsCard}>
         <View style={styles.cardHeading}>
           <View style={styles.cardIcon}>
             <MenteIcon name="call-outline" size={20} color={caregiverTheme.colors.primary} />
@@ -35,24 +36,26 @@ export function CaregiverSettingsScreen({ onOpenSetup, onSwitchRole }: { onOpenS
             <Text style={styles.cardSubtitle}>A gentle voice moment for {patient.preferredName}</Text>
           </View>
         </View>
-        <Hairline theme="caregiver" />
-        <SettingRow icon="time-outline" label="Call time" value={patient.callTime} onPress={onOpenSetup} />
-        <Hairline theme="caregiver" />
-        <SettingRow icon="calendar-outline" label="Days" value="Every day" onPress={onOpenSetup} />
-        <Hairline theme="caregiver" />
-        <SettingRow icon="moon-outline" label="Quiet hours" value={patient.quietHours} onPress={onOpenSetup} />
-        <Hairline theme="caregiver" />
-        <ToggleRow title="Daily reminders" detail="Keep the scheduled companion call active." value={remindersOn} onValueChange={(value) => { setRemindersOn(value); setSaved(false); }} />
-      </SurfaceCard>
+        <View style={styles.solidGroup}>
+          <SettingRow icon="time-outline" label="Call time" value={patient.callTime} onPress={onOpenSetup} />
+          <Hairline theme="caregiver" />
+          <SettingRow icon="calendar-outline" label="Days" value="Every day" onPress={onOpenSetup} />
+          <Hairline theme="caregiver" />
+          <SettingRow icon="moon-outline" label="Quiet hours" value={patient.quietHours} onPress={onOpenSetup} />
+          <Hairline theme="caregiver" />
+          <ToggleRow title="Daily reminders" detail="Keep the scheduled companion call active." value={remindersOn} onValueChange={(value) => { setRemindersOn(value); setSaved(false); }} />
+        </View>
+      </GlassSurface>
 
-      <SurfaceCard theme="caregiver" style={styles.settingsCard}>
+      <GlassSurface theme="caregiver" variant="subtle" style={styles.settingsCard}>
         <Text style={styles.sectionTitle}>Attention preferences</Text>
         <Text style={styles.sectionBody}>Same-day attention stays visible here even when a notification is not delivered.</Text>
-        <Hairline theme="caregiver" />
-        <ToggleRow title="Same-day attention" detail="Show a clear caregiver review prompt when a session may need attention." value={sameDayAlertsOn} onValueChange={(value) => { setSameDayAlertsOn(value); setSaved(false); }} />
-        <Hairline theme="caregiver" />
-        <SettingRow icon="notifications-outline" label="Routine updates" value="In-app only" />
-      </SurfaceCard>
+        <View style={styles.solidGroup}>
+          <ToggleRow title="Same-day attention" detail="Show a clear caregiver review prompt when a session may need attention." value={sameDayAlertsOn} onValueChange={(value) => { setSameDayAlertsOn(value); setSaved(false); }} />
+          <Hairline theme="caregiver" />
+          <SettingRow icon="notifications-outline" label="Routine updates" value="In-app only" />
+        </View>
+      </GlassSurface>
 
       {saved ? (
         <SoftPanel theme="caregiver" style={styles.savedPanel}>
@@ -115,6 +118,14 @@ const styles = StyleSheet.create({
   settingsCard: {
     gap: spacing.sm,
     marginBottom: spacing.lg,
+    padding: spacing.md,
+  },
+  solidGroup: {
+    backgroundColor: caregiverTheme.colors.surface,
+    borderColor: caregiverTheme.colors.border,
+    borderRadius: caregiverTheme.radii.control,
+    borderWidth: 1,
+    paddingHorizontal: spacing.sm,
   },
   cardHeading: {
     alignItems: 'center',

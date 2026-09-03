@@ -1,0 +1,57 @@
+- generic [ref=f1e6]:
+  - generic [ref=f1e7]:
+    - generic [ref=f1e8]:
+      - generic [ref=f1e9]: 
+      - generic [ref=f1e10]: Development preview · Patient
+    - button "Switch to Caregiver view" [active] [ref=f1e173] [cursor=pointer]:
+      - generic [ref=f1e12]: Caregiver view
+      - generic [ref=f1e13]: 
+  - generic [ref=f1e176]:
+    - generic [ref=f1e177]:
+      - generic [ref=f1e178]: mente
+      - generic [ref=f1e185]:
+        - generic [ref=f1e186]: A gentle moment
+        - heading "Hello, Rosa" [level=1] [ref=f1e187]
+        - generic [ref=f1e188]: There is no rush. Spend a little time with people and memories that feel familiar.
+    - generic [ref=f1e189]:
+      - generic [ref=f1e191]:
+        - generic [ref=f1e192]: Today’s invitation
+        - generic [ref=f1e193]: A few familiar moments
+        - generic [ref=f1e194]: Listen, look, or pass. You are always in control.
+      - button "Start today’s moment" [ref=f1e200] [cursor=pointer]:
+        - generic [ref=f1e201]: 
+    - heading "People close to you" [level=1] [ref=f1e205]
+    - generic [ref=f1e206]:
+      - generic [ref=f1e207]:
+        - img "3 family members" [ref=f1e208]:
+          - generic [ref=f1e209]: AD
+          - generic [ref=f1e212]: MD
+          - generic [ref=f1e215]: SD
+        - generic [ref=f1e218]: Your family’s familiar voices and memories are here.
+      - generic [ref=f1e219]:
+        - img "Ana Delgado, AD" [ref=f1e220]:
+          - generic [ref=f1e221]: AD
+        - generic [ref=f1e222]:
+          - generic [ref=f1e223]: Ana Delgado
+          - generic [ref=f1e224]: Sunday lunches and the lemon cake recipe
+      - generic [ref=f1e225]:
+        - img "Miguel Delgado, MD" [ref=f1e226]:
+          - generic [ref=f1e227]: MD
+        - generic [ref=f1e228]:
+          - generic [ref=f1e229]: Miguel Delgado
+          - generic [ref=f1e230]: The old blue bicycle by the front gate
+      - button "See everyone" [ref=f1e231] [cursor=pointer]:
+        - generic [ref=f1e232]: 
+    - generic [ref=f1e234]:
+      - generic [ref=f1e235]: Take your time
+      - generic [ref=f1e236]: You can repeat, skip, or stop whenever you like.
+  - generic [ref=f1e156]:
+    - tab "Play tab" [ref=f1e237] [cursor=pointer]:
+      - generic [ref=f1e238]: 
+      - generic [ref=f1e240]: Play
+    - tab "Family tab" [ref=f1e165] [cursor=pointer]:
+      - generic [ref=f1e166]: 
+      - generic [ref=f1e168]: Family
+    - tab "Help tab" [ref=f1e241] [cursor=pointer]:
+      - generic [ref=f1e242]: 
+      - generic [ref=f1e244]: Help

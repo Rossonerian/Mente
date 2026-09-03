@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { caregiverTheme, patientTheme } from '../theme/tokens';
 import type { AppRole, TabItem } from '../types';
 import { BottomTabBar } from './BottomTabBar';
+import { GlassBackdrop } from './glass/GlassBackdrop';
 import { PreviewBar } from './PreviewBar';
 
 export function AppShell({
@@ -32,9 +33,13 @@ export function AppShell({
 
   return (
     <SafeAreaView edges={safeAreaEdges} style={[styles.safeArea, { backgroundColor }]}>
-      {showPreviewBar ? <PreviewBar role={role} onSwitchRole={onSwitchRole} /> : null}
-      <View style={styles.content}>{children}</View>
-      {showTabs ? <BottomTabBar role={role} tabs={tabs} activeRoute={activeRoute} onNavigate={onNavigate} /> : null}
+      <GlassBackdrop theme={role}>
+        {showPreviewBar ? <PreviewBar role={role} onSwitchRole={onSwitchRole} /> : null}
+        <View style={styles.content}>
+          <View style={styles.screenContent}>{children}</View>
+        </View>
+        {showTabs ? <BottomTabBar role={role} tabs={tabs} activeRoute={activeRoute} onNavigate={onNavigate} /> : null}
+      </GlassBackdrop>
     </SafeAreaView>
   );
 }
@@ -45,5 +50,10 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
+    position: 'relative',
+  },
+  screenContent: {
+    flex: 1,
+    zIndex: 1,
   },
 });

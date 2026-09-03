@@ -7,6 +7,7 @@ import { PageHeader } from '../../components/PageHeader';
 import { ScreenScroll } from '../../components/Screen';
 import { menteMockData } from '../../data/mockData';
 import { patientTheme, spacing } from '../../theme/tokens';
+import { GlassSurface } from '../../components/glass/GlassSurface';
 
 export function PatientFamilyScreen() {
   const [playedName, setPlayedName] = useState<string | null>(null);
@@ -22,10 +23,10 @@ export function PatientFamilyScreen() {
         theme="patient"
       />
 
-      <SurfaceCard theme="patient" style={styles.introCard}>
+      <GlassSurface theme="patient" variant="focus" style={styles.introCard}>
         <Text style={styles.introTitle}>Your family is close</Text>
         <Text style={styles.introBody}>Choose a voice or memory to sit with for a little while. There is nothing to get right.</Text>
-      </SurfaceCard>
+      </GlassSurface>
 
       <SurfaceCard theme="patient" style={styles.membersCard}>
         {family.map((member, index) => (
@@ -57,9 +58,9 @@ export function PatientFamilyScreen() {
 
 const styles = StyleSheet.create({
   introCard: {
-    backgroundColor: patientTheme.colors.surfaceWarm,
     gap: spacing.xs,
     marginBottom: spacing.lg,
+    padding: spacing.md,
   },
   introTitle: {
     color: patientTheme.colors.text,

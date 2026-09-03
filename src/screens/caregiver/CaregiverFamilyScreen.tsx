@@ -9,6 +9,7 @@ import { ScreenScroll } from '../../components/Screen';
 import { SectionHeader } from '../../components/SectionHeader';
 import { caregiverTheme, spacing } from '../../theme/tokens';
 import { menteMockData } from '../../data/mockData';
+import { GlassSurface } from '../../components/glass/GlassSurface';
 
 export function CaregiverFamilyScreen({ onOpenSetup }: { onOpenSetup: () => void }) {
   const [editPreview, setEditPreview] = useState(false);
@@ -24,7 +25,7 @@ export function CaregiverFamilyScreen({ onOpenSetup }: { onOpenSetup: () => void
         theme="caregiver"
       />
 
-      <SurfaceCard theme="caregiver" style={styles.overviewCard}>
+      <GlassSurface theme="caregiver" variant="elevated" style={styles.overviewCard}>
         <View style={styles.overviewTopRow}>
           <View style={styles.overviewCopy}>
             <Text style={styles.overviewEyebrow}>Familiar circle</Text>
@@ -37,7 +38,7 @@ export function CaregiverFamilyScreen({ onOpenSetup }: { onOpenSetup: () => void
           <View style={styles.coverageDot} />
           <Text style={styles.coverageText}>{voiceCount} family voices available for gentle prompts</Text>
         </View>
-      </SurfaceCard>
+      </GlassSurface>
 
       <SectionHeader title="People Rosa recognizes" theme="caregiver" />
       <SurfaceCard theme="caregiver" style={styles.membersCard}>
@@ -90,6 +91,7 @@ const styles = StyleSheet.create({
   overviewCard: {
     gap: spacing.md,
     marginBottom: spacing.xl,
+    padding: spacing.md,
   },
   overviewTopRow: {
     alignItems: 'flex-start',

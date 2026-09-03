@@ -10,8 +10,12 @@
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
     "resolveJsonModule": true,
+    "types": [
+      "jest"
+    ],
     "lib": [
-      "ES2020"
+      "ES2020",
+      "DOM"
     ]
   },
   "include": [

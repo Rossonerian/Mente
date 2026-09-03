@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { MenteButton } from '../../components/Button';
-import { SurfaceCard, SoftPanel } from '../../components/Card';
+import { SoftPanel } from '../../components/Card';
 import { MenteIcon } from '../../components/Icon';
 import { ScreenScroll } from '../../components/Screen';
 import { menteMockData } from '../../data/mockData';
 import { getNextPromptIndex } from '../../navigation/interaction';
 import { patientTheme, spacing } from '../../theme/tokens';
+import { GlassSurface } from '../../components/glass/GlassSurface';
 
 export function PatientInGameScreen({ onComplete }: { onComplete: () => void }) {
   const [promptIndex, setPromptIndex] = useState(0);
@@ -37,7 +38,7 @@ export function PatientInGameScreen({ onComplete }: { onComplete: () => void }) 
         <Text style={styles.focusLabel}>A moment with family</Text>
       </View>
 
-      <SurfaceCard theme="patient" style={styles.promptCard}>
+      <GlassSurface theme="patient" variant="focus" style={styles.promptCard}>
         <View style={styles.promptTopRow}>
           <SoftPanel theme="patient" style={styles.soundPanel}>
             <MenteIcon name="volume-medium-outline" size={29} color={patientTheme.colors.primary} />
@@ -58,12 +59,12 @@ export function PatientInGameScreen({ onComplete }: { onComplete: () => void }) 
         <SoftPanel theme="patient" style={styles.messagePanel}>
           <Text style={styles.messageText}>{message}</Text>
         </SoftPanel>
-      </SurfaceCard>
+      </GlassSurface>
 
       <View style={styles.actionFooter}>
         <Text style={styles.footerPrompt}>Choose what feels right.</Text>
         <MenteButton label="Repeat" onPress={handleRepeat} theme="patient" variant="secondary" iconName="refresh-outline" style={styles.actionButton} />
-        <MenteButton label="Skip" onPress={handleSkip} theme="patient" variant="quiet" iconName="arrow-forward-outline" style={styles.actionButton} />
+        <MenteButton label="Skip" onPress={handleSkip} theme="patient" variant="secondary" iconName="arrow-forward-outline" style={styles.actionButton} />
         <MenteButton label="Stop" onPress={onComplete} theme="patient" variant="danger" iconName="stop-circle-outline" style={styles.actionButton} accessibilityHint="Ends this moment gently" />
       </View>
     </ScreenScroll>
@@ -109,9 +110,9 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   promptCard: {
-    backgroundColor: patientTheme.colors.surfaceWarm,
     gap: spacing.md,
     marginBottom: spacing.xl,
+    padding: spacing.md,
   },
   promptTopRow: {
     alignItems: 'center',

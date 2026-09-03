@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { Platform, ScrollView, StyleSheet, View, useWindowDimensions, type StyleProp, type ViewStyle } from 'react-native';
 import type { ThemeName } from './Card';
-import { caregiverTheme, patientTheme, spacing } from '../theme/tokens';
+import { spacing } from '../theme/tokens';
 import { getResponsiveLayout } from '../theme/responsive';
 
 export function ScreenScroll({
@@ -13,7 +13,6 @@ export function ScreenScroll({
   theme?: ThemeName;
   contentStyle?: StyleProp<ViewStyle>;
 }) {
-  const backgroundColor = theme === 'caregiver' ? caregiverTheme.colors.background : patientTheme.colors.background;
   const { width } = useWindowDimensions();
   const layout = getResponsiveLayout(width, Platform.OS === 'web' ? 'web' : 'native');
   const maxWidth = theme === 'patient' ? 480 : layout.contentMaxWidth;
@@ -21,8 +20,8 @@ export function ScreenScroll({
 
   return (
     <ScrollView
-      style={{ backgroundColor }}
-      contentContainerStyle={[styles.content, { backgroundColor, paddingHorizontal: horizontalPadding }, contentStyle]}
+      style={styles.scroll}
+      contentContainerStyle={[styles.content, { paddingHorizontal: horizontalPadding }, contentStyle]}
       keyboardShouldPersistTaps="handled"
       showsVerticalScrollIndicator={false}
     >
@@ -32,7 +31,11 @@ export function ScreenScroll({
 }
 
 const styles = StyleSheet.create({
+  scroll: {
+    backgroundColor: 'transparent',
+  },
   content: {
+    backgroundColor: 'transparent',
     flexGrow: 1,
     padding: spacing.md,
     paddingBottom: spacing.xxl,

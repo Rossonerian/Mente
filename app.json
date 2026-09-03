@@ -11,6 +11,10 @@
     },
     "ios": {
       "bundleIdentifier": "com.momento.mente"
-    }
+    },
+    "plugins": [
+      "expo-font",
+      "expo-status-bar"
+    ]
   }
 }

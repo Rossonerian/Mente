@@ -4,6 +4,7 @@ import type { AppRole } from '../types';
 import type { ThemeName } from './Card';
 import { MenteIcon } from './Icon';
 import { FocusablePressable } from './FocusablePressable';
+import { GlassSurface } from './glass/GlassSurface';
 
 export function PreviewBar({ role, onSwitchRole }: { role: AppRole; onSwitchRole: () => void }) {
   const theme: ThemeName = role === 'caregiver' ? 'caregiver' : 'patient';
@@ -12,7 +13,12 @@ export function PreviewBar({ role, onSwitchRole }: { role: AppRole; onSwitchRole
   const minimumTouchTarget = role === 'patient' ? 64 : 48;
 
   return (
-    <View style={[styles.container, { backgroundColor: theme === 'caregiver' ? '#E9ECFF' : '#FBE6DC', minHeight: minimumTouchTarget }]}>
+    <GlassSurface
+      theme={theme}
+      variant="chrome"
+      radius={0}
+      style={[styles.container, { minHeight: minimumTouchTarget }]}
+    >
       <View style={styles.copy}>
         <MenteIcon name="code-slash-outline" size={16} color={tokens.colors.primary} />
         <Text style={[styles.label, { color: tokens.colors.text }]}>Development preview · {role === 'caregiver' ? 'Caregiver' : 'Patient'}</Text>
@@ -35,7 +41,7 @@ export function PreviewBar({ role, onSwitchRole }: { role: AppRole; onSwitchRole
         <Text style={[styles.switchLabel, { color: tokens.colors.primary }]}>{nextRoleLabel}</Text>
         <MenteIcon name="swap-horizontal-outline" size={17} color={tokens.colors.primary} />
       </FocusablePressable>
-    </View>
+    </GlassSurface>
   );
 }
 

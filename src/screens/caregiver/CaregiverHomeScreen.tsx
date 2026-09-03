@@ -9,6 +9,7 @@ import { PageHeader } from '../../components/PageHeader';
 import { ScreenScroll } from '../../components/Screen';
 import { SectionHeader } from '../../components/SectionHeader';
 import { StatusPill } from '../../components/StatusPill';
+import { GlassSurface } from '../../components/glass/GlassSurface';
 import { caregiverTheme, spacing } from '../../theme/tokens';
 import { menteMockData } from '../../data/mockData';
 import type { CaregiverRoute } from '../../types';
@@ -30,7 +31,7 @@ export function CaregiverHomeScreen({ onNavigate }: { onNavigate: (route: Caregi
         theme="caregiver"
       />
 
-      <SurfaceCard theme="caregiver" style={styles.patientCard}>
+      <GlassSurface theme="caregiver" variant="elevated" style={styles.patientCard}>
         <View style={styles.patientTopRow}>
           <View style={styles.patientIdentity}>
             <Avatar initials={patient.initials} name={patient.name} size="large" theme="caregiver" tone="primary" />
@@ -50,11 +51,11 @@ export function CaregiverHomeScreen({ onNavigate }: { onNavigate: (route: Caregi
           </View>
           <Text style={styles.timeText}>{patient.callTime} call</Text>
         </View>
-      </SurfaceCard>
+      </GlassSurface>
 
       <View style={[styles.dashboardGrid, isWideWeb && styles.dashboardGridWide]}>
         <View style={styles.dashboardColumn}>
-          <SurfaceCard theme="caregiver" style={styles.alertCard}>
+          <GlassSurface theme="caregiver" variant="elevated" style={styles.alertCard}>
             <View accessible accessibilityRole="text" accessibilityLabel={`${alert.title}. ${alert.body}`}>
               <View style={styles.alertHeading}>
                 <SoftPanel theme="caregiver" style={styles.alertIconPanel}>
@@ -83,10 +84,10 @@ export function CaregiverHomeScreen({ onNavigate }: { onNavigate: (route: Caregi
               />
             </View>
             <Text style={styles.createdLabel}>{alert.createdLabel} · Review with care</Text>
-          </SurfaceCard>
+          </GlassSurface>
 
           <SectionHeader title="Today’s snapshot" theme="caregiver" />
-          <SurfaceCard theme="caregiver" style={styles.snapshotCard}>
+          <GlassSurface theme="caregiver" variant="subtle" style={styles.snapshotCard}>
             <View style={styles.metricsRow}>
               <MetricTile value="3" label="moments this week" />
               <MetricTile value="18 min" label="time together" />
@@ -96,7 +97,7 @@ export function CaregiverHomeScreen({ onNavigate }: { onNavigate: (route: Caregi
               <Text style={styles.snapshotNoteTitle}>What changed</Text>
               <Text style={styles.snapshotNoteBody}>{trend.reason}</Text>
             </View>
-          </SurfaceCard>
+          </GlassSurface>
         </View>
 
         <View style={styles.dashboardColumn}>
@@ -140,6 +141,7 @@ const styles = StyleSheet.create({
   patientCard: {
     gap: spacing.md,
     marginBottom: spacing.lg,
+    padding: spacing.md,
   },
   patientTopRow: {
     alignItems: 'center',
@@ -194,9 +196,9 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   alertCard: {
-    borderColor: '#F3D5CC',
     gap: spacing.sm,
     marginBottom: spacing.xl,
+    padding: spacing.md,
   },
   alertHeading: {
     alignItems: 'center',
@@ -264,6 +266,7 @@ const styles = StyleSheet.create({
   snapshotCard: {
     gap: spacing.md,
     marginBottom: spacing.xl,
+    padding: spacing.md,
   },
   metricsRow: {
     flexDirection: 'row',

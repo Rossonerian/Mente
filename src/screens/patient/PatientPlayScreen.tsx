@@ -9,6 +9,7 @@ import { SectionHeader } from '../../components/SectionHeader';
 import { menteMockData } from '../../data/mockData';
 import { patientTheme, spacing } from '../../theme/tokens';
 import type { PatientRoute } from '../../types';
+import { GlassSurface } from '../../components/glass/GlassSurface';
 
 export function PatientPlayScreen({ onNavigate }: { onNavigate: (route: PatientRoute) => void }) {
   const { patient, family } = menteMockData;
@@ -22,7 +23,7 @@ export function PatientPlayScreen({ onNavigate }: { onNavigate: (route: PatientR
         theme="patient"
       />
 
-      <SurfaceCard theme="patient" style={styles.invitationCard}>
+      <GlassSurface theme="patient" variant="focus" style={styles.invitationCard}>
         <View style={styles.invitationTopRow}>
           <View style={styles.invitationCopy}>
             <Text style={styles.invitationEyebrow}>Today’s invitation</Text>
@@ -32,7 +33,7 @@ export function PatientPlayScreen({ onNavigate }: { onNavigate: (route: PatientR
           <FamilyConstellation theme="patient" />
         </View>
         <MenteButton label="Start today’s moment" onPress={() => onNavigate('in-game')} theme="patient" iconName="play" />
-      </SurfaceCard>
+      </GlassSurface>
 
       <SectionHeader title="People close to you" theme="patient" />
       <SurfaceCard theme="patient" style={styles.familyCard}>
@@ -62,9 +63,9 @@ export function PatientPlayScreen({ onNavigate }: { onNavigate: (route: PatientR
 
 const styles = StyleSheet.create({
   invitationCard: {
-    backgroundColor: patientTheme.colors.surfaceWarm,
     gap: spacing.md,
     marginBottom: spacing.xl,
+    padding: spacing.md,
   },
   invitationTopRow: {
     alignItems: 'flex-start',

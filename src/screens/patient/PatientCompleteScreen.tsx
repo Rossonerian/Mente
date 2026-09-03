@@ -1,9 +1,10 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { MenteButton } from '../../components/Button';
-import { SurfaceCard, SoftPanel } from '../../components/Card';
+import { SoftPanel } from '../../components/Card';
 import { MenteIcon } from '../../components/Icon';
 import { ScreenScroll } from '../../components/Screen';
 import { patientTheme, spacing } from '../../theme/tokens';
+import { GlassSurface } from '../../components/glass/GlassSurface';
 
 export function PatientCompleteScreen({ onReturnToPlay, onFamily }: { onReturnToPlay: () => void; onFamily: () => void }) {
   return (
@@ -18,14 +19,14 @@ export function PatientCompleteScreen({ onReturnToPlay, onFamily }: { onReturnTo
         </View>
         <Text accessibilityRole="header" style={styles.title}>That was enough for today</Text>
         <Text style={styles.subtitle}>Thank you for spending a quiet moment with your family. You can come back whenever it feels right.</Text>
-        <SurfaceCard theme="patient" style={styles.completeCard}>
+        <GlassSurface theme="patient" variant="focus" style={styles.completeCard}>
           <Text style={styles.cardTitle}>A gentle close</Text>
           <Text style={styles.cardBody}>There is nothing to finish and nothing to remember perfectly. A little time together is enough.</Text>
           <SoftPanel theme="patient" style={styles.familyNote}>
             <MenteIcon name="people-outline" size={21} color={patientTheme.colors.primary} />
             <Text style={styles.familyNoteText}>Ana, Miguel, and Sofia are close by in your family memories.</Text>
           </SoftPanel>
-        </SurfaceCard>
+        </GlassSurface>
         <View style={styles.actions}>
           <MenteButton label="Return to Play" onPress={onReturnToPlay} theme="patient" iconName="arrow-back-outline" />
           <MenteButton label="See family" onPress={onFamily} theme="patient" variant="secondary" iconName="people-outline" />
@@ -95,6 +96,7 @@ const styles = StyleSheet.create({
   completeCard: {
     gap: spacing.sm,
     marginTop: spacing.sm,
+    padding: spacing.md,
     width: '100%',
   },
   cardTitle: {
