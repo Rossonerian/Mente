@@ -1,0 +1,16 @@
+{
+  "expo": {
+    "name": "Mente",
+    "slug": "mente",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "scheme": "mente",
+    "android": {
+      "package": "com.momento.mente"
+    },
+    "ios": {
+      "bundleIdentifier": "com.momento.mente"
+    }
+  }
+}
