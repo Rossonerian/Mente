@@ -14,10 +14,8 @@ class Settings(BaseSettings):
     database_url: str = "sqlite:///./mente.db"
     auto_create_tables: bool = False
 
-    jwt_secret: str = Field(default="change-me-before-deployment-32-chars", min_length=32)
-    jwt_algorithm: Literal["HS256"] = "HS256"
-    jwt_issuer: str = Field(default="mente-api", min_length=1, max_length=128)
-    access_token_minutes: int = Field(default=720, ge=5, le=10_080)
+    supabase_url: str | None = None
+    supabase_jwt_audience: str = Field(default="authenticated", min_length=1, max_length=128)
 
     call_bot_api_key: str = Field(default="change-me-call-bot-key-32-characters", min_length=32)
     cors_origins: str = "http://localhost:19006,http://localhost:8081,http://localhost:3000"
@@ -34,8 +32,10 @@ class Settings(BaseSettings):
     @model_validator(mode="after")
     def reject_development_secrets_in_production(self) -> Self:
         if self.environment == "production":
-            if _is_placeholder_secret(self.jwt_secret) or _is_placeholder_secret(self.call_bot_api_key):
-                raise ValueError("Production requires non-default JWT_SECRET and CALL_BOT_API_KEY values")
+            if not self.supabase_url:
+                raise ValueError("Production requires SUPABASE_URL for caregiver token validation")
+            if _is_placeholder_secret(self.call_bot_api_key):
+                raise ValueError("Production requires a non-default CALL_BOT_API_KEY value")
             if self.auto_create_tables:
                 raise ValueError("Production must use Alembic migrations instead of AUTO_CREATE_TABLES")
         return self

@@ -33,9 +33,9 @@ class User(Base):
     __tablename__ = "users"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    auth_user_id: Mapped[str | None] = mapped_column(String(36), unique=True, index=True, nullable=True)
     email: Mapped[str] = mapped_column(String(320), unique=True, index=True)
     display_name: Mapped[str] = mapped_column(String(120))
-    password_hash: Mapped[str] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
 
     memberships: Mapped[list[FamilyMembership]] = relationship(back_populates="user", cascade="all, delete-orphan")

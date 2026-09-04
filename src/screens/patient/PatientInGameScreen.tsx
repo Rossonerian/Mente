@@ -8,20 +8,53 @@ import { menteMockData } from '../../data/mockData';
 import { getNextPromptIndex } from '../../navigation/interaction';
 import { patientTheme, spacing } from '../../theme/tokens';
 import { GlassSurface } from '../../components/glass/GlassSurface';
+import { adaptPatientMemoryToPrompt } from '../../api/adapters/caregiverFamily';
+import { isDevelopmentMockMode } from '../../api/config';
+import type { MemoryDto, PatientSessionDto } from '../../api/contracts/patient';
+import { patientDeviceStore } from '../../auth/patientDeviceStore';
+import { createPatientClientId, usePatientGameWrite } from '../../features/patient/usePatientSession';
 
-export function PatientInGameScreen({ onComplete }: { onComplete: () => void }) {
+export function PatientInGameScreen({ onComplete, patientToken = null, session = null, memories = [] }: { onComplete: () => void; patientToken?: string | null; session?: PatientSessionDto | null; memories?: MemoryDto[] }) {
   const [promptIndex, setPromptIndex] = useState(0);
   const [message, setMessage] = useState('When you are ready, listen to the moment.');
-  const prompt = menteMockData.prompts[promptIndex];
+  const [writeError, setWriteError] = useState<string | null>(null);
+  const [failedFinalize, setFailedFinalize] = useState<{ status: 'COMPLETED' | 'EARLY_TERMINATED'; terminationReason?: string } | null>(null);
+  const { metric, finalize } = usePatientGameWrite(patientToken);
+  const prompts = isDevelopmentMockMode ? menteMockData.prompts : memories.map(adaptPatientMemoryToPrompt);
+  const prompt = prompts[promptIndex];
+
+  if (!prompt) return <ScreenScroll theme="patient"><SoftPanel theme="patient" style={styles.messagePanel}><Text style={styles.messageText}>There are no familiar moments ready right now. You can return whenever it feels right.</Text></SoftPanel></ScreenScroll>;
 
   const handleRepeat = () => {
     setMessage(`I’ll share ${prompt.personName}’s moment again.`);
   };
 
-  const handleSkip = () => {
-    const nextPromptIndex = getNextPromptIndex(promptIndex, menteMockData.prompts.length);
-    if (nextPromptIndex === null) {
+  const finish = async (status: 'COMPLETED' | 'EARLY_TERMINATED', terminationReason?: string) => {
+    if (isDevelopmentMockMode || !session) { onComplete(); return; }
+    const payload = { status, termination_reason: terminationReason, metadata_json: { source: 'patient-app' } } as const;
+    setWriteError(null);
+    setFailedFinalize(null);
+    try {
+      await finalize.mutateAsync({ sessionId: session.id, payload });
+      await patientDeviceStore.removePendingWrite();
       onComplete();
+    } catch {
+      await patientDeviceStore.setPendingWrite(JSON.stringify({ sessionId: session.id, payload }));
+      setFailedFinalize({ status, terminationReason });
+      setWriteError('This moment is still open. You can try saving your gentle close again, or return without saying it was completed.');
+    }
+  };
+
+  const handleSkip = async () => {
+    if (!isDevelopmentMockMode && session) {
+      setWriteError(null);
+      try {
+        await metric.mutateAsync({ sessionId: session.id, payload: { client_metric_id: `${session.id}-${prompt.id}`, item_type: 'FAMILIAR_MEMORY', hesitation_count: 0, metadata_json: { client_round_id: createPatientClientId('round'), interaction: 'skip' } } });
+      } catch { setWriteError('Mente could not save that step. Nothing was marked complete. Please try again or stop for now.'); return; }
+    }
+    const nextPromptIndex = getNextPromptIndex(promptIndex, prompts.length);
+    if (nextPromptIndex === null) {
+      await finish('COMPLETED');
       return;
     }
     setPromptIndex(nextPromptIndex);
@@ -64,8 +97,9 @@ export function PatientInGameScreen({ onComplete }: { onComplete: () => void }) 
       <View style={styles.actionFooter}>
         <Text style={styles.footerPrompt}>Choose what feels right.</Text>
         <MenteButton label="Repeat" onPress={handleRepeat} theme="patient" variant="secondary" iconName="refresh-outline" style={styles.actionButton} />
-        <MenteButton label="Skip" onPress={handleSkip} theme="patient" variant="secondary" iconName="arrow-forward-outline" style={styles.actionButton} />
-        <MenteButton label="Stop" onPress={onComplete} theme="patient" variant="danger" iconName="stop-circle-outline" style={styles.actionButton} accessibilityHint="Ends this moment gently" />
+        <MenteButton label={metric.isPending ? 'Saving this step…' : 'Skip'} onPress={() => void handleSkip()} disabled={metric.isPending || finalize.isPending} theme="patient" variant="secondary" iconName="arrow-forward-outline" style={styles.actionButton} />
+        <MenteButton label={finalize.isPending ? 'Saving gentle close…' : 'Stop'} onPress={() => void finish('EARLY_TERMINATED', 'PATIENT_STOP')} disabled={metric.isPending || finalize.isPending} theme="patient" variant="danger" iconName="stop-circle-outline" style={styles.actionButton} accessibilityHint="Ends this moment gently" />
+        {writeError && failedFinalize ? <SoftPanel theme="patient" style={styles.failedWritePanel}><Text accessibilityLiveRegion="polite" style={styles.failedWriteText}>{writeError}</Text><MenteButton label="Try saving again" onPress={() => void finish(failedFinalize.status, failedFinalize.terminationReason)} theme="patient" variant="secondary" /></SoftPanel> : null}
       </View>
     </ScreenScroll>
   );
@@ -202,6 +236,8 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     lineHeight: 22,
   },
+  failedWritePanel: { backgroundColor: patientTheme.colors.coralSoft, gap: spacing.sm },
+  failedWriteText: { color: patientTheme.colors.text, fontSize: 15, fontWeight: '700', lineHeight: 22 },
   actionFooter: {
     gap: spacing.sm,
   },

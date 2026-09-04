@@ -1,0 +1,27 @@
+{
+  "id": "AUTH-001",
+  "claim_key": "backend.supabase-caregiver-token-validation",
+  "title": "Replace local caregiver JWT authority with Supabase validation",
+  "type": "TASK",
+  "owner": "BACKEND",
+  "model_class": "CRITICAL",
+  "priority": "CRITICAL",
+  "status": "READY_FOR_REVIEW",
+  "objective": "Make FastAPI accept only verified Supabase caregiver access tokens and resolve them through a local domain-profile mapping without retaining a competing password/JWT authority.",
+  "dependencies": ["CONTRACT-001"],
+  "execution_mode": "WRITE",
+  "allowed_scope": ["backend/app/config.py", "backend/app/dependencies.py", "backend/app/security.py", "backend/app/models.py", "backend/app/routers/auth.py", "backend/app/schemas.py", "backend/alembic/versions/**", "backend/tests/**", "backend/pyproject.toml", "backend/requirements.lock", "backend/README.md"],
+  "read_only_scope": ["architecture.md", "integration-data-flow.md", "skills-tech-stack.md"],
+  "forbidden_scope": ["frontend application source", "Supabase remote project", "credentials", "deployment", "commits", "pushes"],
+  "acceptance_criteria": ["Old Mente password/JWT routes no longer authenticate caregivers", "Supabase issuer, audience, expiry, signature, algorithm, subject, and authenticated role are verified", "Local profile mapping uses auth_user_id and never dynamic email linking", "Missing mapping returns a clear 403", "Tests cover valid, expired, wrong issuer/audience/role, and legacy-token rejection"],
+  "required_tests": ["Focused backend auth tests", "pytest", "ruff", "mypy", "bandit", "pip-audit", "OpenAPI generation"],
+  "workspace": "/home/rosso/Projects/Mente",
+  "branch": "main",
+  "result": {
+    "summary": "Supabase-only caregiver validation, explicit profile onboarding, OpenAPI security metadata, an Alembic migration, and focused contract/security tests are complete.",
+    "handoff": ".agent-state/handoffs/AUTH-001.md"
+  },
+  "review_status": "NOT_STARTED",
+  "qa_status": "NOT_STARTED",
+  "blockers": []
+}

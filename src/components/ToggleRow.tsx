@@ -7,18 +7,20 @@ export function ToggleRow({
   detail,
   value,
   onValueChange,
+  disabled = false,
 }: {
   title: string;
   detail: string;
   value: boolean;
   onValueChange: (value: boolean) => void;
+  disabled?: boolean;
 }) {
   const handleKeyDown = (event: FocusableKeyboardEvent) => {
     const key = event.key ?? event.nativeEvent?.key;
     const isSpace = key === ' ' || key === 'Spacebar';
     const isRepeat = event.repeat ?? event.nativeEvent?.repeat;
 
-    if (isSpace && !isRepeat) {
+    if (!disabled && isSpace && !isRepeat) {
       event.preventDefault?.();
       onValueChange(!value);
     }
@@ -31,13 +33,14 @@ export function ToggleRow({
       accessibilityHint={detail}
       accessibilityState={{ checked: value }}
       aria-checked={value}
+      disabled={disabled}
       onKeyDown={handleKeyDown}
-      onPress={() => onValueChange(!value)}
+      onPress={() => { if (!disabled) onValueChange(!value); }}
       style={({ pressed, focused }) => [
         styles.row,
         {
           borderColor: focused ? caregiverTheme.colors.text : 'transparent',
-          opacity: pressed ? 0.7 : 1,
+          opacity: disabled ? 0.55 : pressed ? 0.7 : 1,
         },
       ]}
     >

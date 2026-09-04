@@ -1,0 +1,32 @@
+{
+  "id": "CONTRACT-001",
+  "claim_key": "integration.freeze-fastapi-contract",
+  "title": "Freeze FastAPI/OpenAPI and authentication contract",
+  "type": "TASK",
+  "owner": "ARCHITECT",
+  "model_class": "CRITICAL",
+  "priority": "CRITICAL",
+  "status": "DONE",
+  "objective": "Compare the actual FastAPI routes and generated OpenAPI with the requested caregiver/patient flows, identify exact gaps, and define the smallest safe contract before frontend code.",
+  "dependencies": ["BASE-001"],
+  "execution_mode": "READ_ONLY",
+  "allowed_scope": [".agent-state/decisions/CONTRACT-001.md"],
+  "read_only_scope": ["backend/app/**", "backend/tests/**", "src/**", "prd.md", "architecture.md", "integration-data-flow.md"],
+  "forbidden_scope": ["source edits", "dependencies", "credentials", "deployment", "commits", "pushes"],
+  "acceptance_criteria": [
+    "Every requested caregiver and patient capability maps to an exact route or a named gap",
+    "Supabase caregiver authority and patient device-token boundaries are explicit",
+    "Game idempotency and overview freshness are verified from source",
+    "Frontend contracts do not invent unsupported fields or success semantics"
+  ],
+  "required_tests": ["Generate OpenAPI from the application", "Compare OpenAPI operations and schemas with route source and tests"],
+  "workspace": "/home/rosso/Projects/Mente",
+  "branch": "main",
+  "result": {
+    "summary": "OpenAPI 3.1.0 generated and route/source audit completed. Supabase auth cutover is required.",
+    "decision": ".agent-state/decisions/CONTRACT-001.md"
+  },
+  "review_status": "APPROVE",
+  "qa_status": "NOT_REQUIRED",
+  "blockers": []
+}

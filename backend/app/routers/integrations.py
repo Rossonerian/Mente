@@ -15,6 +15,7 @@ from ..schemas import (
     CallBotScheduleItem,
     CallBotSessionIngest,
     CallScheduleRead,
+    MemoryRead,
     NotificationPreferenceRead,
     PatientRead,
     SessionRead,
@@ -72,10 +73,12 @@ def get_call_context(patient_id: str, _auth: CallBotAuth, db: DbSession) -> Call
     schedule = db.scalar(select(CallSchedule).where(CallSchedule.patient_id == patient_id))
     preference = db.get(NotificationPreference, patient_id)
     return CallBotContext(
-        patient=patient,
-        memories=memories,
-        schedule=schedule,
-        notification_preference=preference,
+        patient=PatientRead.model_validate(patient),
+        memories=[MemoryRead.model_validate(memory) for memory in memories],
+        schedule=CallScheduleRead.model_validate(schedule) if schedule is not None else None,
+        notification_preference=(
+            NotificationPreferenceRead.model_validate(preference) if preference is not None else None
+        ),
     )
 
 

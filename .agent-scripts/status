@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+repository_root=$(git rev-parse --show-toplevel)
+
+"$repository_root/.agent-scripts/validate"
+sed -n '1,220p' "$repository_root/.agent-state/dashboard.md"
+git -C "$repository_root" status --short --branch
+git -C "$repository_root" worktree list

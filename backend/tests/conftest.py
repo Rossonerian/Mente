@@ -5,6 +5,15 @@ from fastapi.testclient import TestClient
 
 from app.config import Settings
 from app.main import create_app
+from app.security import VerifiedSupabaseClaims
+
+
+class StubSupabaseVerifier:
+    def __init__(self, claims: VerifiedSupabaseClaims) -> None:
+        self.claims = claims
+
+    def verify(self, _token: str) -> VerifiedSupabaseClaims:
+        return self.claims
 
 
 @pytest.fixture
@@ -13,23 +22,31 @@ def client(tmp_path) -> Generator[TestClient, None, None]:
     settings = Settings(
         database_url=f"sqlite:///{database_path.as_posix()}",
         auto_create_tables=True,
-        jwt_secret="test-jwt-secret-that-is-long-enough",
+        supabase_url="https://mente-test.supabase.co",
         call_bot_api_key="test-call-bot-key-that-is-long-enough",
         cors_origins="http://localhost:19006",
     )
-    with TestClient(create_app(settings)) as test_client:
+    app = create_app(settings)
+    app.state.caregiver_token_verifier = StubSupabaseVerifier(
+        VerifiedSupabaseClaims(
+            subject="71d1a67f-a892-4ef1-b06d-489c69b455d0",
+            email="ana@example.com",
+            role="authenticated",
+        )
+    )
+    with TestClient(app) as test_client:
         yield test_client
 
 
 @pytest.fixture
 def caregiver_setup(client: TestClient) -> dict:
     auth = client.post(
-        "/v1/auth/register",
-        json={"email": "ana@example.com", "password": "safe-password", "display_name": "Ana"},
+        "/v1/auth/profile",
+        headers={"Authorization": "Bearer supabase-access-token"},
+        json={"display_name": "Ana"},
     )
     assert auth.status_code == 201, auth.text
-    token = auth.json()["access_token"]
-    headers = {"Authorization": f"Bearer {token}"}
+    headers = {"Authorization": "Bearer supabase-access-token"}
 
     family = client.post("/v1/families", headers=headers, json={"name": "Delgado Family", "mode": "GROUP"})
     assert family.status_code == 201, family.text

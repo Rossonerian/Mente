@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [[ $# -ne 1 || ! "$1" =~ ^[A-Z]+-[0-9]+$ ]]; then
+  echo "usage: .agent-scripts/cleanup-worktree TASK-ID" >&2
+  exit 64
+fi
+
+task_id=$1
+repository_root=$(git rev-parse --show-toplevel)
+task_file="$repository_root/.agent-state/tasks/$task_id.json"
+workspace="$repository_root/.agent-worktrees/$task_id"
+
+if [[ ! -f "$task_file" ]]; then
+  echo "task does not exist: $task_file" >&2
+  exit 66
+fi
+
+task_status=$(python3 -c 'import json, sys; print(json.load(open(sys.argv[1], encoding="utf-8"))["status"])' "$task_file")
+if [[ "$task_status" != "DONE" && "$task_status" != "INTEGRATED" ]]; then
+  echo "task must be DONE or INTEGRATED before cleanup; current status: $task_status" >&2
+  exit 65
+fi
+
+if [[ ! -d "$workspace" ]]; then
+  echo "workspace does not exist: $workspace" >&2
+  exit 66
+fi
+
+if [[ -n "$(git -C "$workspace" status --porcelain)" ]]; then
+  echo "workspace has uncommitted changes; refusing cleanup" >&2
+  exit 65
+fi
+
+git -C "$repository_root" worktree remove "$workspace"
+echo "removed worktree $workspace; branch was retained"

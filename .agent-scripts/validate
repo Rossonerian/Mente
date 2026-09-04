@@ -1,0 +1,521 @@
+#!/usr/bin/env python3
+"""Validate Mente's repository-local agent state without third-party packages."""
+
+from __future__ import annotations
+
+import argparse
+import fnmatch
+import json
+import os
+import re
+import subprocess
+import sys
+from pathlib import Path
+from typing import Any
+
+
+ROOT = Path(os.environ.get("MENTE_AGENT_ROOT", Path(__file__).resolve().parents[1])).resolve()
+TASK_DIR = ROOT / ".agent-state" / "tasks"
+
+REQUIRED_RELATIVE_FILES = {
+    "AGENTS.md",
+    ".agents/architect.md",
+    ".agents/backend.md",
+    ".agents/boss.md",
+    ".agents/bug-fixer.md",
+    ".agents/frontend.md",
+    ".agents/integration.md",
+    ".agents/model-routing.md",
+    ".agents/qa.md",
+    ".agents/reviewer.md",
+    ".agents/supervisor.md",
+    ".agent-scripts/cleanup-worktree",
+    ".agent-scripts/create-worktree",
+    ".agent-scripts/status",
+    ".agent-scripts/test-validate",
+    ".agent-scripts/validate",
+    ".agent-state/README.md",
+    ".agent-state/dashboard.md",
+    ".agent-state/project.json",
+    ".agent-state/templates/acceptance.md",
+    ".agent-state/templates/failure-report.md",
+    ".agent-state/templates/handoff.md",
+    ".agent-state/templates/task.json",
+    ".agent-state/templates/worker-assignment.md",
+}
+REQUIRED_TASK_FIELDS = {
+    "id",
+    "claim_key",
+    "title",
+    "type",
+    "owner",
+    "model_class",
+    "priority",
+    "status",
+    "objective",
+    "dependencies",
+    "execution_mode",
+    "allowed_scope",
+    "read_only_scope",
+    "forbidden_scope",
+    "acceptance_criteria",
+    "required_tests",
+    "workspace",
+    "branch",
+    "result",
+    "review_status",
+    "qa_status",
+    "blockers",
+}
+STRING_FIELDS = {"id", "claim_key", "title", "type", "owner", "model_class", "priority", "status", "objective", "execution_mode", "review_status", "qa_status"}
+LIST_FIELDS = {"dependencies", "allowed_scope", "read_only_scope", "forbidden_scope", "acceptance_criteria", "required_tests", "blockers"}
+STATUSES = {
+    "BACKLOG",
+    "PLANNED",
+    "ASSIGNED",
+    "IN_PROGRESS",
+    "BLOCKED",
+    "READY_FOR_REVIEW",
+    "CHANGES_REQUESTED",
+    "READY_FOR_QA",
+    "TESTING",
+    "FAILED",
+    "BUG_CREATED",
+    "FIXING",
+    "RETESTING",
+    "APPROVED",
+    "READY_FOR_INTEGRATION",
+    "INTEGRATING",
+    "INTEGRATED",
+    "READY_FOR_ACCEPTANCE",
+    "DONE",
+}
+TASK_TYPES = {"TASK", "MILESTONE", "BUG"}
+OWNERS = {"BOSS", "SUPERVISOR", "ARCHITECT", "BACKEND", "FRONTEND", "INTEGRATION", "QA", "BUG-FIXER", "REVIEWER"}
+MODEL_CLASSES = {"TINY", "STANDARD", "COMPLEX", "CRITICAL"}
+PRIORITIES = {"LOW", "MEDIUM", "HIGH", "CRITICAL"}
+EXECUTION_MODES = {"READ_ONLY", "WRITE"}
+REVIEW_STATUSES = {"NOT_STARTED", "PENDING", "APPROVE", "REJECT", "REQUEST_CHANGES", "NOT_REQUIRED"}
+QA_STATUSES = {"NOT_STARTED", "PENDING", "PASS", "FAIL", "BLOCKED", "NOT_REQUIRED"}
+ACTIVE_STATUSES = {"ASSIGNED", "IN_PROGRESS", "FIXING", "INTEGRATING", "TESTING", "RETESTING"}
+ACTIVE_WRITE_STATUSES = {"ASSIGNED", "IN_PROGRESS", "FIXING", "INTEGRATING"}
+DEPENDENCY_READY_STATUSES = {"APPROVED", "INTEGRATED", "DONE"}
+BUG_SOURCE_STATUSES = DEPENDENCY_READY_STATUSES | {"FAILED", "BUG_CREATED", "CHANGES_REQUESTED"}
+TERMINAL_CLAIM_STATUSES = {"DONE"}
+BLOCKER_FIELDS = {"task", "blocker", "blocking_task_or_dependency", "owner", "action_required"}
+
+
+def relative(path: Path) -> str:
+    try:
+        return str(path.relative_to(ROOT))
+    except ValueError:
+        return str(path)
+
+
+def load_json(path: Path) -> dict[str, Any]:
+    try:
+        value = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as error:
+        raise ValueError(f"{relative(path)}: {error}") from error
+    if not isinstance(value, dict):
+        raise ValueError(f"{relative(path)}: top-level JSON value must be an object")
+    return value
+
+
+def normalize_scope(scope: str) -> str:
+    normalized = scope.strip().replace("\\", "/")
+    if normalized in {".", "./", "/"}:
+        return "."
+    return normalized.removeprefix("./").rstrip("/")
+
+
+def static_scope_prefix(scope: str) -> str:
+    positions = [position for marker in "*?[" if (position := scope.find(marker)) >= 0]
+    return scope[: min(positions)].rstrip("/") if positions else scope
+
+
+def path_contains(parent: str, child: str) -> bool:
+    return parent == child or child.startswith(f"{parent}/")
+
+
+def scopes_overlap(left: str, right: str) -> bool:
+    left = normalize_scope(left)
+    right = normalize_scope(right)
+    if not left or not right:
+        return False
+    if left in {".", "/", "*", "**"} or right in {".", "/", "*", "**"}:
+        return True
+    left_glob = any(marker in left for marker in "*?[")
+    right_glob = any(marker in right for marker in "*?[")
+    if left == right:
+        return True
+    if left_glob and not right_glob and fnmatch.fnmatchcase(right, left):
+        return True
+    if right_glob and not left_glob and fnmatch.fnmatchcase(left, right):
+        return True
+    left_prefix = static_scope_prefix(left)
+    right_prefix = static_scope_prefix(right)
+    if (left_glob and not left_prefix) or (right_glob and not right_prefix):
+        return True
+    if not left_glob and not right_glob:
+        return path_contains(left, right) or path_contains(right, left)
+    return bool(left_prefix and right_prefix) and (
+        path_contains(left_prefix, right_prefix) or path_contains(right_prefix, left_prefix)
+    )
+
+
+def git_worktrees() -> dict[Path, str | None]:
+    result = subprocess.run(
+        ["git", "worktree", "list", "--porcelain"],
+        cwd=ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode != 0:
+        return {}
+    worktrees: dict[Path, str | None] = {}
+    current_path: Path | None = None
+    for line in result.stdout.splitlines():
+        if line.startswith("worktree "):
+            current_path = Path(line.removeprefix("worktree ")).resolve()
+            worktrees[current_path] = None
+        elif line.startswith("branch ") and current_path is not None:
+            worktrees[current_path] = line.removeprefix("branch ")
+    return worktrees
+
+
+def validate_task_shape(path: Path, task: dict[str, Any]) -> list[str]:
+    errors: list[str] = []
+    missing = sorted(REQUIRED_TASK_FIELDS - task.keys())
+    if missing:
+        return [f"{path.name}: missing fields {', '.join(missing)}"]
+
+    for field in STRING_FIELDS:
+        if not isinstance(task[field], str) or not task[field].strip():
+            errors.append(f"{path.name}: {field} must be a non-empty string")
+    for field in LIST_FIELDS:
+        if not isinstance(task[field], list):
+            errors.append(f"{path.name}: {field} must be a list")
+
+    if errors:
+        return errors
+
+    task_id = task["id"]
+    if path.stem != task_id:
+        errors.append(f"{path.name}: filename must match id {task_id}")
+    if not re.fullmatch(r"[A-Z]+-[0-9]+", task_id):
+        errors.append(f"{task_id}: id must match ROLE-000")
+    if not re.fullmatch(r"[a-z0-9]+(?:[.-][a-z0-9]+)+", task["claim_key"]):
+        errors.append(f"{task_id}: claim_key must be a stable lowercase dotted/dashed key")
+    if task["status"] not in STATUSES:
+        errors.append(f"{task_id}: invalid status {task['status']}")
+    if task["type"] not in TASK_TYPES:
+        errors.append(f"{task_id}: invalid task type {task['type']}")
+    if task["status"] == "READY_FOR_ACCEPTANCE" and task["type"] != "MILESTONE":
+        errors.append(f"{task_id}: READY_FOR_ACCEPTANCE is reserved for MILESTONE tasks")
+    if task["owner"] not in OWNERS:
+        errors.append(f"{task_id}: invalid owner {task['owner']}")
+    if task["model_class"] not in MODEL_CLASSES:
+        errors.append(f"{task_id}: invalid model class {task['model_class']}")
+    if task["priority"] not in PRIORITIES:
+        errors.append(f"{task_id}: invalid priority {task['priority']}")
+    if task["execution_mode"] not in EXECUTION_MODES:
+        errors.append(f"{task_id}: invalid execution_mode {task['execution_mode']}")
+    if task["review_status"] not in REVIEW_STATUSES:
+        errors.append(f"{task_id}: invalid review_status {task['review_status']}")
+    if task["qa_status"] not in QA_STATUSES:
+        errors.append(f"{task_id}: invalid qa_status {task['qa_status']}")
+
+    for field in ("dependencies", "allowed_scope", "read_only_scope", "forbidden_scope", "acceptance_criteria", "required_tests"):
+        if isinstance(task[field], list) and not all(isinstance(value, str) and value.strip() for value in task[field]):
+            errors.append(f"{task_id}: {field} must contain only non-empty strings")
+    for field in ("allowed_scope", "acceptance_criteria", "required_tests"):
+        if isinstance(task[field], list) and not task[field]:
+            errors.append(f"{task_id}: {field} cannot be empty")
+
+    if task["workspace"] is not None and not isinstance(task["workspace"], str):
+        errors.append(f"{task_id}: workspace must be a string or null")
+    if task["branch"] is not None and not isinstance(task["branch"], str):
+        errors.append(f"{task_id}: branch must be a string or null")
+    if task["result"] is not None and not isinstance(task["result"], dict):
+        errors.append(f"{task_id}: result must be an object or null")
+
+    if task["status"] == "BLOCKED" and not task["blockers"]:
+        errors.append(f"{task_id}: BLOCKED task requires blocker details")
+    if task["status"] != "BLOCKED" and task["blockers"]:
+        errors.append(f"{task_id}: only BLOCKED tasks may contain blocker details")
+    for blocker in task["blockers"] if isinstance(task["blockers"], list) else []:
+        if not isinstance(blocker, dict) or not BLOCKER_FIELDS.issubset(blocker):
+            errors.append(f"{task_id}: malformed blocker entry")
+            continue
+        if blocker["task"] != task_id or blocker["owner"] not in OWNERS:
+            errors.append(f"{task_id}: blocker task/owner is inconsistent")
+        for field in ("blocker", "action_required"):
+            if not isinstance(blocker[field], str) or not blocker[field].strip():
+                errors.append(f"{task_id}: blocker {field} must be non-empty")
+        blocking_reference = blocker["blocking_task_or_dependency"]
+        if blocking_reference is not None and (
+            not isinstance(blocking_reference, str) or not blocking_reference.strip()
+        ):
+            errors.append(f"{task_id}: blocker dependency must be a non-empty task id or null")
+
+    return errors
+
+
+def validate_milestone(task: dict[str, Any]) -> list[str]:
+    errors: list[str] = []
+    task_id = task["id"]
+    if task["type"] != "MILESTONE" or task["status"] not in {"READY_FOR_ACCEPTANCE", "DONE"}:
+        return errors
+
+    result = task["result"] if isinstance(task["result"], dict) else {}
+    acceptance_path = result.get("acceptance_package")
+    expected_acceptance_path = f".agent-state/handoffs/{task_id}-acceptance.md"
+    if task["review_status"] != "APPROVE":
+        errors.append(f"{task_id}: acceptance requires REVIEWER approval")
+    if task["qa_status"] not in {"PASS", "NOT_REQUIRED"}:
+        errors.append(f"{task_id}: acceptance requires QA PASS or documented NOT_REQUIRED")
+    if result.get("supervisor_recommendation") not in {"ACCEPT", "REJECT"}:
+        errors.append(f"{task_id}: acceptance requires Supervisor recommendation")
+    if acceptance_path != expected_acceptance_path:
+        errors.append(f"{task_id}: acceptance package must be {expected_acceptance_path}")
+    else:
+        package_path = ROOT / expected_acceptance_path
+        if not package_path.is_file():
+            errors.append(f"{task_id}: acceptance package is missing")
+        else:
+            package = package_path.read_text(encoding="utf-8")
+            section_names = ("ORIGINAL REQUEST", "IMPLEMENTED", "VALIDATION", "REVIEW", "BUGS", "RISKS")
+            section_pattern = "|".join(re.escape(name) for name in (*section_names, "SUPERVISOR RECOMMENDATION"))
+            sections_populated = True
+            for section_name in section_names:
+                match = re.search(
+                    rf"(?ms)^{re.escape(section_name)}:[ \t]*(.*?)(?=^(?:{section_pattern}):|\Z)",
+                    package,
+                )
+                content = match.group(1).strip() if match else ""
+                if not re.sub(r"[\s#>*_`:\-.]", "", content):
+                    sections_populated = False
+                    break
+            required_lines = (
+                f"MILESTONE: {task_id}",
+                f"SUPERVISOR RECOMMENDATION: {result.get('supervisor_recommendation')}",
+            )
+            if not sections_populated or not all(marker in package for marker in required_lines):
+                errors.append(f"{task_id}: acceptance package is not populated with canonical evidence")
+    if task["status"] == "DONE" and (
+        result.get("accepted_by") != "BOSS"
+        or result.get("boss_decision") not in {"ACCEPT", "ACCEPT_WITH_FOLLOWUP"}
+    ):
+        errors.append(f"{task_id}: DONE milestone lacks BOSS acceptance evidence")
+    return errors
+
+
+def validate_state() -> list[str]:
+    errors: list[str] = []
+    for relative_path in sorted(REQUIRED_RELATIVE_FILES):
+        path = ROOT / relative_path
+        if not path.exists():
+            errors.append(f"missing required file: {relative_path}")
+
+    for path in sorted((ROOT / ".agent-state").rglob("*.json")):
+        try:
+            load_json(path)
+        except ValueError as error:
+            errors.append(str(error))
+
+    try:
+        project = load_json(ROOT / ".agent-state" / "project.json")
+        if project.get("milestone_completion_authority") != "BOSS":
+            errors.append("project.json must reserve milestone completion for BOSS")
+        max_writers = project.get("capabilities", {}).get("parallel_execution", {}).get("policy_max_implementation_workers")
+        if not isinstance(max_writers, int) or max_writers < 1 or max_writers > 3:
+            errors.append("project.json implementation-worker policy must be an integer from 1 to 3")
+    except ValueError as error:
+        errors.append(str(error))
+        max_writers = 3
+
+    tasks: dict[str, dict[str, Any]] = {}
+    claims: dict[str, str] = {}
+    for path in sorted(TASK_DIR.glob("*.json")):
+        try:
+            task = load_json(path)
+        except ValueError as error:
+            errors.append(str(error))
+            continue
+
+        shape_errors = validate_task_shape(path, task)
+        errors.extend(shape_errors)
+        if shape_errors:
+            continue
+
+        task_id = task["id"]
+        if task_id in tasks:
+            errors.append(f"duplicate task id: {task_id}")
+        tasks[task_id] = task
+        if task["status"] not in TERMINAL_CLAIM_STATUSES:
+            prior = claims.get(task["claim_key"])
+            if prior:
+                errors.append(f"{task_id} and {prior}: duplicate active claim_key {task['claim_key']}")
+            claims[task["claim_key"]] = task_id
+        errors.extend(validate_milestone(task))
+
+    for task_id, task in tasks.items():
+        for dependency in task["dependencies"]:
+            if dependency not in tasks:
+                errors.append(f"{task_id}: unknown dependency {dependency}")
+            if dependency == task_id:
+                errors.append(f"{task_id}: task cannot depend on itself")
+
+        for blocker in task["blockers"]:
+            reference = blocker["blocking_task_or_dependency"]
+            if reference is not None and reference not in task["dependencies"]:
+                errors.append(f"{task_id}: blocker dependency {reference} must be a declared dependency")
+
+        if task["status"] in ACTIVE_STATUSES:
+            ready_statuses = BUG_SOURCE_STATUSES if task["type"] == "BUG" else DEPENDENCY_READY_STATUSES
+            unfinished = [
+                dependency
+                for dependency in task["dependencies"]
+                if tasks.get(dependency, {}).get("status") not in ready_statuses
+            ]
+            if unfinished:
+                errors.append(f"{task_id}: active task has unfinished dependencies: {', '.join(unfinished)}")
+
+        if task["status"] in {"INTEGRATING", "INTEGRATED"}:
+            unfinished = [
+                dependency
+                for dependency in task["dependencies"]
+                if tasks.get(dependency, {}).get("status") not in DEPENDENCY_READY_STATUSES
+            ]
+            if unfinished:
+                errors.append(f"{task_id}: integration started before dependencies were approved: {', '.join(unfinished)}")
+
+    visiting: set[str] = set()
+    visited: set[str] = set()
+
+    def visit(task_id: str) -> None:
+        if task_id in visiting:
+            errors.append(f"dependency cycle detected at {task_id}")
+            return
+        if task_id in visited:
+            return
+        visiting.add(task_id)
+        for dependency in tasks[task_id]["dependencies"]:
+            if dependency in tasks:
+                visit(dependency)
+        visiting.remove(task_id)
+        visited.add(task_id)
+
+    for task_id in tasks:
+        visit(task_id)
+
+    active_writers = [
+        task
+        for task in tasks.values()
+        if task["execution_mode"] == "WRITE" and task["status"] in ACTIVE_WRITE_STATUSES
+    ]
+    if len(active_writers) > max_writers:
+        errors.append(f"active implementation writers exceed policy limit {max_writers}: {len(active_writers)}")
+
+    worktrees = git_worktrees()
+    active_branches: dict[str, str] = {}
+    for task in active_writers:
+        task_id = task["id"]
+        expected_workspace = (ROOT / ".agent-worktrees" / task_id).resolve()
+        expected_branch = f"agent/{task_id}"
+        if not task["workspace"] or Path(task["workspace"]).resolve() != expected_workspace:
+            errors.append(f"{task_id}: active writer requires canonical workspace {expected_workspace}")
+        if task["branch"] != expected_branch:
+            errors.append(f"{task_id}: active writer requires canonical branch {expected_branch}")
+        prior = active_branches.get(task["branch"])
+        if prior:
+            errors.append(f"{task_id} and {prior}: active writers share branch {task['branch']}")
+        elif task["branch"]:
+            active_branches[task["branch"]] = task_id
+        actual_branch = worktrees.get(expected_workspace)
+        if actual_branch != f"refs/heads/{expected_branch}":
+            errors.append(f"{task_id}: canonical Git worktree/branch is not registered")
+
+    for index, left in enumerate(active_writers):
+        for right in active_writers[index + 1 :]:
+            if left["workspace"] == right["workspace"]:
+                errors.append(f"{left['id']} and {right['id']}: active writers share workspace {left['workspace']}")
+            overlaps = sorted(
+                f"{left_scope} <> {right_scope}"
+                for left_scope in left["allowed_scope"]
+                for right_scope in right["allowed_scope"]
+                if scopes_overlap(left_scope, right_scope)
+            )
+            if overlaps:
+                errors.append(f"{left['id']} and {right['id']}: overlapping write scope: {', '.join(overlaps)}")
+
+    for path in sorted((ROOT / ".agent-state" / "dry-runs").glob("*.json")):
+        try:
+            dry_run = load_json(path)
+        except ValueError:
+            continue
+        graph = dry_run.get("task_graph", [])
+        if not isinstance(graph, list) or not all(isinstance(node, dict) for node in graph):
+            errors.append(f"{path.name}: task_graph must be a list of objects")
+            continue
+        nodes = {node.get("id"): node for node in graph}
+        if None in nodes or len(nodes) != len(graph):
+            errors.append(f"{path.name}: every dry-run task needs a unique id")
+            continue
+        for node_id, node in nodes.items():
+            for dependency in node.get("dependencies", []):
+                if dependency not in nodes:
+                    errors.append(f"{path.name}:{node_id}: unknown dependency {dependency}")
+            if node.get("role") == "INTEGRATION" and node.get("status") in {"INTEGRATING", "INTEGRATED"}:
+                unfinished = [
+                    dependency
+                    for dependency in node.get("dependencies", [])
+                    if nodes[dependency].get("status") not in DEPENDENCY_READY_STATUSES
+                ]
+                if unfinished:
+                    errors.append(f"{path.name}:{node_id}: dry-run integration started prematurely: {', '.join(unfinished)}")
+
+    return errors
+
+
+def project_conflicts() -> list[str]:
+    result = subprocess.run(
+        ["git", "grep", "-n", "-e", "^<<<<<<< ", "-e", "^=======$", "-e", "^>>>>>>> ", "--", ":!*.md"],
+        cwd=ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    return [line for line in result.stdout.splitlines() if line]
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--project", action="store_true", help="also fail on tracked source conflict markers")
+    args = parser.parse_args()
+
+    errors = validate_state()
+    if errors:
+        for error in errors:
+            print(f"ERROR: {error}")
+        return 1
+
+    task_count = len(list(TASK_DIR.glob("*.json")))
+    print(f"Agent workflow state valid: {task_count} task(s)")
+
+    if args.project:
+        conflicts = project_conflicts()
+        if conflicts:
+            print("PROJECT BLOCKER: tracked conflict markers found:")
+            for conflict in conflicts:
+                print(f"  {conflict}")
+            return 2
+        print("Project conflict-marker check passed")
+
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

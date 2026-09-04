@@ -5,10 +5,12 @@ from sqlalchemy.orm import selectinload
 from ..dependencies import CurrentUser, DbSession, PatientDeviceAuth, require_patient_access
 from ..models import AlertEvent, CognitiveSession, SessionMetric, utc_now
 from ..schemas import (
+    AlertRead,
     GameSessionStart,
     MetricCreate,
     MetricRead,
     PatientOverview,
+    PatientRead,
     SessionFinalize,
     SessionRead,
 )
@@ -141,9 +143,9 @@ def patient_overview(patient_id: str, user: CurrentUser, db: DbSession) -> Patie
         )
     )
     return PatientOverview(
-        patient=patient,
-        recent_sessions=sessions,
-        active_alerts=alerts,
+        patient=PatientRead.model_validate(patient),
+        recent_sessions=[SessionRead.model_validate(session) for session in sessions],
+        active_alerts=[AlertRead.model_validate(alert) for alert in alerts],
         trend=build_patient_trend(db, patient),
     )
 
