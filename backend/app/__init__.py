@@ -1,0 +1,1 @@
+"""Mente MVP application backend."""
