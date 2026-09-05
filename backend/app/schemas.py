@@ -32,22 +32,13 @@ class InputModel(BaseModel):
 
 class UserRead(ApiModel):
     id: str
-<<<<<<< HEAD
     auth_user_id: str | None
-=======
->>>>>>> origin/new_components
     email: EmailStr
     display_name: str
     created_at: datetime
 
 
-<<<<<<< HEAD
 class CaregiverProfileCreate(InputModel):
-=======
-class RegisterRequest(InputModel):
-    email: EmailStr
-    password: str = Field(min_length=8, max_length=128)
->>>>>>> origin/new_components
     display_name: str = Field(min_length=1, max_length=120)
 
     @field_validator("display_name")
@@ -56,20 +47,6 @@ class RegisterRequest(InputModel):
         return validate_required_text(value, "display_name")
 
 
-<<<<<<< HEAD
-=======
-class LoginRequest(InputModel):
-    email: EmailStr
-    password: str = Field(min_length=1, max_length=128)
-
-
-class AuthResponse(BaseModel):
-    access_token: str
-    token_type: Literal["bearer"] = "bearer"
-    user: UserRead
-
-
->>>>>>> origin/new_components
 class FamilyCreate(InputModel):
     name: str = Field(min_length=1, max_length=120)
     mode: Literal["SOLO", "GROUP"] = "SOLO"

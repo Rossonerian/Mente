@@ -10,7 +10,6 @@ import { menteMockData } from '../../data/mockData';
 import { patientTheme, spacing } from '../../theme/tokens';
 import type { PatientRoute } from '../../types';
 import { GlassSurface } from '../../components/glass/GlassSurface';
-<<<<<<< HEAD
 import { adaptMemoryToFamilyMember } from '../../api/adapters/caregiverFamily';
 import { isDevelopmentMockMode } from '../../api/config';
 import { createPatientClientId, usePatientGameWrite, usePatientMemoryQuery, usePatientProfileQuery, useStartPatientGame } from '../../features/patient/usePatientSession';
@@ -51,21 +50,12 @@ function PendingWriteRecovery({ patientToken }: { patientToken: string | null })
 }
 
 function PatientPlayContent({ onNavigate, patientName, family, onStart, starting, error = null }: { onNavigate: (route: PatientRoute) => void; patientName: string; family: import('../../types').FamilyMember[]; onStart: () => void; starting: boolean; error?: string | null }) {
-=======
-
-export function PatientPlayScreen({ onNavigate }: { onNavigate: (route: PatientRoute) => void }) {
-  const { patient, family } = menteMockData;
->>>>>>> origin/new_components
 
   return (
     <ScreenScroll theme="patient">
       <PageHeader
         eyebrow="A gentle moment"
-<<<<<<< HEAD
         title={`Hello, ${patientName}`}
-=======
-        title={`Hello, ${patient.preferredName}`}
->>>>>>> origin/new_components
         subtitle="There is no rush. Spend a little time with people and memories that feel familiar."
         theme="patient"
       />
@@ -79,17 +69,11 @@ export function PatientPlayScreen({ onNavigate }: { onNavigate: (route: PatientR
           </View>
           <FamilyConstellation theme="patient" />
         </View>
-<<<<<<< HEAD
         <MenteButton label={starting ? 'Starting your moment…' : 'Start today’s moment'} onPress={onStart} disabled={starting} theme="patient" iconName="play" />
       </GlassSurface>
 
       {error ? <SoftPanel theme="patient" style={styles.errorPanel}><Text accessibilityLiveRegion="polite" style={styles.errorText}>{error}</Text></SoftPanel> : null}
 
-=======
-        <MenteButton label="Start today’s moment" onPress={() => onNavigate('in-game')} theme="patient" iconName="play" />
-      </GlassSurface>
-
->>>>>>> origin/new_components
       <SectionHeader title="People close to you" theme="patient" />
       <SurfaceCard theme="patient" style={styles.familyCard}>
         <View style={styles.familyIntro}>
@@ -116,11 +100,8 @@ export function PatientPlayScreen({ onNavigate }: { onNavigate: (route: PatientR
   );
 }
 
-<<<<<<< HEAD
 function PatientState({ title, body, actionLabel, onAction }: { title: string; body: string; actionLabel?: string; onAction?: () => void }) { return <ScreenScroll theme="patient"><PageHeader eyebrow="A gentle moment" title={title} subtitle={body} theme="patient" /><SurfaceCard theme="patient" style={styles.familyCard}><Text style={styles.invitationTitle}>{title}</Text><Text style={styles.invitationBody}>{body}</Text>{actionLabel && onAction ? <MenteButton label={actionLabel} onPress={onAction} theme="patient" /> : null}</SurfaceCard></ScreenScroll>; }
 
-=======
->>>>>>> origin/new_components
 const styles = StyleSheet.create({
   invitationCard: {
     gap: spacing.md,
@@ -204,12 +185,9 @@ const styles = StyleSheet.create({
     fontSize: 15,
     lineHeight: 21,
   },
-<<<<<<< HEAD
   errorPanel: { backgroundColor: patientTheme.colors.coralSoft, marginBottom: spacing.md },
   errorText: { color: patientTheme.colors.text, fontSize: 15, fontWeight: '700', lineHeight: 22 },
   pendingPanel: { backgroundColor: patientTheme.colors.coralSoft, gap: spacing.xs, marginBottom: spacing.md },
   pendingTitle: { color: patientTheme.colors.text, fontSize: 16, fontWeight: '800' },
   pendingBody: { color: patientTheme.colors.textMuted, fontSize: 15, lineHeight: 22 },
-=======
->>>>>>> origin/new_components
 });

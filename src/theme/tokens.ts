@@ -14,7 +14,7 @@ export const caregiverTheme = {
   colors: {
     primary: '#3448D8',
     primaryPressed: '#2638AF',
-    background: '#F7F8FC',
+    background: '#F8FAFF',
     surface: '#FFFFFF',
     surfaceWarm: '#FFF7F2',
     surfaceMuted: '#EEF0FF',
@@ -53,7 +53,7 @@ export const patientTheme = {
   colors: {
     primary: '#B7442F',
     primaryPressed: '#963625',
-    background: '#FFF8F0',
+    background: '#FFFCF5',
     surface: '#FFFFFF',
     surfaceMuted: '#FFF0E5',
     surfaceWarm: '#FFF0E5',

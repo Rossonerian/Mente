@@ -11,7 +11,6 @@ import { SectionHeader } from '../../components/SectionHeader';
 import { StatusPill } from '../../components/StatusPill';
 import { GlassSurface } from '../../components/glass/GlassSurface';
 import { caregiverTheme, spacing } from '../../theme/tokens';
-<<<<<<< HEAD
 import type { CaregiverRoute } from '../../types';
 import { useResponsiveLayout } from '../../hooks/useResponsiveLayout';
 import { useMemo, useState } from 'react';
@@ -49,17 +48,6 @@ export function CaregiverHomeScreen({ onNavigate, accessToken, caregiverId }: { 
   const sessions = data.sessions;
   const alert = mockData?.alert ?? (overview.kind === 'ready' ? overview.data.alerts[0] : undefined);
   const trend = data.trend;
-=======
-import { menteMockData } from '../../data/mockData';
-import type { CaregiverRoute } from '../../types';
-import { useResponsiveLayout } from '../../hooks/useResponsiveLayout';
-import { useState } from 'react';
-
-export function CaregiverHomeScreen({ onNavigate }: { onNavigate: (route: CaregiverRoute) => void }) {
-  const [checkInNoted, setCheckInNoted] = useState(false);
-  const { patient, family, sessions, alert, trend } = menteMockData;
-  const { isWideWeb } = useResponsiveLayout();
->>>>>>> origin/new_components
   const voiceCount = family.filter((member) => member.voiceAvailable).length;
 
   return (
@@ -95,11 +83,7 @@ export function CaregiverHomeScreen({ onNavigate }: { onNavigate: (route: Caregi
 
       <View style={[styles.dashboardGrid, isWideWeb && styles.dashboardGridWide]}>
         <View style={styles.dashboardColumn}>
-<<<<<<< HEAD
           {alert ? <GlassSurface theme="caregiver" variant="elevated" style={styles.alertCard}>
-=======
-          <GlassSurface theme="caregiver" variant="elevated" style={styles.alertCard}>
->>>>>>> origin/new_components
             <View accessible accessibilityRole="text" accessibilityLabel={`${alert.title}. ${alert.body}`}>
               <View style={styles.alertHeading}>
                 <SoftPanel theme="caregiver" style={styles.alertIconPanel}>
@@ -117,7 +101,6 @@ export function CaregiverHomeScreen({ onNavigate }: { onNavigate: (route: Caregi
                 <Text style={styles.notedText}>Check-in planned. This note is local to the preview.</Text>
               </SoftPanel>
             ) : null}
-<<<<<<< HEAD
             {acknowledgementError ? <SoftPanel theme="caregiver" style={styles.acknowledgementError}><Text accessibilityLiveRegion="polite" style={styles.acknowledgementErrorText}>{acknowledgementError}</Text></SoftPanel> : null}
             <View style={styles.alertActions}>
               <MenteButton label={alert.actionLabel} onPress={() => onNavigate('history')} theme="caregiver" variant="primary" style={styles.actionButton} />
@@ -131,24 +114,11 @@ export function CaregiverHomeScreen({ onNavigate }: { onNavigate: (route: Caregi
                 theme="caregiver"
                 variant="secondary"
                 disabled={acknowledge.isPending}
-=======
-            <View style={styles.alertActions}>
-              <MenteButton label={alert.actionLabel} onPress={() => onNavigate('history')} theme="caregiver" variant="primary" style={styles.actionButton} />
-              <MenteButton
-                label={checkInNoted ? 'Check-in noted' : 'Plan a check-in'}
-                onPress={() => setCheckInNoted((current) => !current)}
-                theme="caregiver"
-                variant="secondary"
->>>>>>> origin/new_components
                 style={styles.actionButton}
               />
             </View>
             <Text style={styles.createdLabel}>{alert.createdLabel} · Review with care</Text>
-<<<<<<< HEAD
           </GlassSurface> : null}
-=======
-          </GlassSurface>
->>>>>>> origin/new_components
 
           <SectionHeader title="Today’s snapshot" theme="caregiver" />
           <GlassSurface theme="caregiver" variant="subtle" style={styles.snapshotCard}>
@@ -178,17 +148,10 @@ export function CaregiverHomeScreen({ onNavigate }: { onNavigate: (route: Caregi
           <SectionHeader title="Rosa’s family" actionLabel="Open family" onActionPress={() => onNavigate('family')} theme="caregiver" />
           <SurfaceCard theme="caregiver" style={styles.familyCard}>
             <View style={styles.familyTopRow}>
-<<<<<<< HEAD
               {family.length ? <AvatarStack people={family.map(({ initials, name }) => ({ initials, name }))} theme="caregiver" /> : <FamilyConstellation theme="caregiver" />}
               <Text style={styles.familyCount}>{family.length ? `${family.length} familiar people` : 'Family memories'}</Text>
             </View>
             <Text style={styles.familyBody}>{family.length ? 'Familiar people and memories are ready for gentle moments.' : 'Family memories will appear here when they are added.'}</Text>
-=======
-              <AvatarStack people={family.map(({ initials, name }) => ({ initials, name }))} theme="caregiver" />
-              <Text style={styles.familyCount}>3 familiar people</Text>
-            </View>
-            <Text style={styles.familyBody}>Ana, Miguel, and Sofia’s memories are available for gentle moments.</Text>
->>>>>>> origin/new_components
           </SurfaceCard>
         </View>
       </View>
@@ -196,7 +159,6 @@ export function CaregiverHomeScreen({ onNavigate }: { onNavigate: (route: Caregi
   );
 }
 
-<<<<<<< HEAD
 function CaregiverEmptyState() {
   return (
     <ScreenScroll theme="caregiver">
@@ -222,8 +184,6 @@ function CaregiverErrorState({ error, onRetry, hasStaleData }: { error: string; 
   );
 }
 
-=======
->>>>>>> origin/new_components
 const styles = StyleSheet.create({
   dashboardGrid: {
     gap: 0,
@@ -350,7 +310,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     lineHeight: 18,
   },
-<<<<<<< HEAD
   acknowledgementError: {
     backgroundColor: caregiverTheme.colors.alertBackground,
     paddingVertical: spacing.sm,
@@ -361,8 +320,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     lineHeight: 18,
   },
-=======
->>>>>>> origin/new_components
   alertActions: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -428,7 +385,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
   },
-<<<<<<< HEAD
   stateCard: {
     gap: spacing.sm,
     marginTop: spacing.lg,
@@ -443,6 +399,4 @@ const styles = StyleSheet.create({
     fontSize: 15,
     lineHeight: 22,
   },
-=======
->>>>>>> origin/new_components
 });

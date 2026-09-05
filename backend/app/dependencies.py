@@ -2,19 +2,13 @@ import secrets
 from datetime import datetime, timedelta, timezone
 from typing import Annotated
 
-<<<<<<< HEAD
 from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import APIKeyHeader, HTTPAuthorizationCredentials, HTTPBearer
-=======
-from fastapi import Depends, Header, HTTPException, Request, status
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
->>>>>>> origin/new_components
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from .database import get_db
 from .models import FamilyMembership, Patient, PatientDevice, User, utc_now
-<<<<<<< HEAD
 from .security import (
     SupabaseTokenConfigurationError,
     SupabaseTokenError,
@@ -56,31 +50,6 @@ def get_current_user(db: DbSession, claims: VerifiedCaregiver) -> User:
     user = db.scalar(select(User).where(User.auth_user_id == claims.subject))
     if user is None:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="CAREGIVER_PROFILE_NOT_PROVISIONED")
-=======
-from .security import decode_access_token, hash_opaque_token
-
-bearer_scheme = HTTPBearer(auto_error=False)
-DbSession = Annotated[Session, Depends(get_db)]
-
-
-def get_current_user(
-    request: Request,
-    db: DbSession,
-    credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(bearer_scheme)],
-) -> User:
-    if credentials is None or credentials.scheme.lower() != "bearer":
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Authentication required")
-    settings = request.app.state.settings
-    user_id = decode_access_token(
-        credentials.credentials,
-        settings.jwt_secret,
-        settings.jwt_algorithm,
-        settings.jwt_issuer,
-    )
-    user = db.get(User, user_id) if user_id else None
-    if user is None:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired token")
->>>>>>> origin/new_components
     return user
 
 
@@ -109,11 +78,7 @@ def require_patient_access(db: Session, user_id: str, patient_id: str) -> Patien
 
 def get_patient_device(
     db: DbSession,
-<<<<<<< HEAD
     patient_token: Annotated[str | None, Depends(patient_token_scheme)] = None,
-=======
-    patient_token: Annotated[str | None, Header(alias="X-Patient-Token")] = None,
->>>>>>> origin/new_components
 ) -> PatientDevice:
     if not patient_token:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Patient device token required")
@@ -132,11 +97,7 @@ PatientDeviceAuth = Annotated[PatientDevice, Depends(get_patient_device)]
 
 def require_call_bot_key(
     request: Request,
-<<<<<<< HEAD
     call_bot_key: Annotated[str | None, Depends(call_bot_key_scheme)] = None,
-=======
-    call_bot_key: Annotated[str | None, Header(alias="X-Call-Bot-Key")] = None,
->>>>>>> origin/new_components
 ) -> None:
     expected = request.app.state.settings.call_bot_api_key
     if not call_bot_key or not secrets.compare_digest(call_bot_key, expected):

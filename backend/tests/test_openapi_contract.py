@@ -1,3 +1,5 @@
+from fastapi.testclient import TestClient
+
 from app.config import Settings
 from app.main import create_app
 
@@ -27,3 +29,22 @@ def test_openapi_exposes_the_supabase_caregiver_profile_contract() -> None:
     assert "/v1/patient/bind" in specification["paths"]
     assert "/v1/patient/game-sessions/{session_id}/metrics" in specification["paths"]
     assert "/v1/patient/game-sessions/{session_id}/finalize" in specification["paths"]
+
+
+def test_readiness_probe_reports_a_live_local_database() -> None:
+    app = create_app(
+        Settings(
+            environment="test",
+            database_url="sqlite:////tmp/mente-openapi-contract.db",
+            supabase_url="https://mente-test.supabase.co",
+            call_bot_api_key="test-call-bot-key-that-is-long-enough",
+        )
+    )
+
+    with TestClient(app) as client:
+        response = client.get("/ready")
+
+    assert "/ready" in app.openapi()["paths"]
+    assert response.status_code == 200
+    assert response.json()["status"] == "ready"
+    assert len(response.headers["x-request-id"]) == 32

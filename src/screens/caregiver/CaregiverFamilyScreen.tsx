@@ -10,7 +10,6 @@ import { SectionHeader } from '../../components/SectionHeader';
 import { caregiverTheme, spacing } from '../../theme/tokens';
 import { menteMockData } from '../../data/mockData';
 import { GlassSurface } from '../../components/glass/GlassSurface';
-<<<<<<< HEAD
 import { useCaregiverPatientContext } from '../../features/caregiver/useCaregiverContext';
 import { useQuery } from '@tanstack/react-query';
 import { adaptMemoryToFamilyMember } from '../../api/adapters/caregiverFamily';
@@ -39,12 +38,6 @@ function ConnectedFamilyContent({ onOpenSetup, caregiverId, context }: { onOpenS
 
 function FamilyContent({ onOpenSetup, family, patientName, live }: { onOpenSetup: () => void; family: FamilyMember[]; patientName: string; live: boolean }) {
   const [editPreview, setEditPreview] = useState(false);
-=======
-
-export function CaregiverFamilyScreen({ onOpenSetup }: { onOpenSetup: () => void }) {
-  const [editPreview, setEditPreview] = useState(false);
-  const { family, patient } = menteMockData;
->>>>>>> origin/new_components
   const voiceCount = family.filter((member) => member.voiceAvailable).length;
 
   return (
@@ -60,13 +53,8 @@ export function CaregiverFamilyScreen({ onOpenSetup }: { onOpenSetup: () => void
         <View style={styles.overviewTopRow}>
           <View style={styles.overviewCopy}>
             <Text style={styles.overviewEyebrow}>Familiar circle</Text>
-<<<<<<< HEAD
             <Text style={styles.overviewTitle}>{patientName}’s people</Text>
             <Text style={styles.overviewBody}>{live ? 'These familiar details are saved for gentle family moments.' : 'These details are shown as local preview data for the family view.'}</Text>
-=======
-            <Text style={styles.overviewTitle}>{patient.preferredName}’s people</Text>
-            <Text style={styles.overviewBody}>These details are shown as local preview data for the family view.</Text>
->>>>>>> origin/new_components
           </View>
           <AvatarStack people={family.map(({ initials, name }) => ({ initials, name }))} theme="caregiver" />
         </View>
@@ -106,21 +94,12 @@ export function CaregiverFamilyScreen({ onOpenSetup }: { onOpenSetup: () => void
 
       {editPreview ? (
         <SoftPanel theme="caregiver" style={styles.editNotice}>
-<<<<<<< HEAD
             <Text style={styles.editNoticeTitle}>{live ? 'Family memory management' : 'Preview-only controls'}</Text>
             <Text style={styles.editNoticeBody}>{live ? 'This view reflects saved, consented memories. Add or revise details through the caregiver management flow.' : 'A connected family editor belongs to the future management surface. Nothing is saved from this preview.'}</Text>
         </SoftPanel>
       ) : null}
       <MenteButton
         label={editPreview ? 'Hide family note' : live ? 'About saved memories' : 'Preview edit controls'}
-=======
-          <Text style={styles.editNoticeTitle}>Preview-only controls</Text>
-          <Text style={styles.editNoticeBody}>A connected family editor belongs to the future management surface. Nothing is saved from this preview.</Text>
-        </SoftPanel>
-      ) : null}
-      <MenteButton
-        label={editPreview ? 'Hide edit note' : 'Preview edit controls'}
->>>>>>> origin/new_components
         onPress={() => setEditPreview((current) => !current)}
         theme="caregiver"
         variant="secondary"
@@ -132,13 +111,10 @@ export function CaregiverFamilyScreen({ onOpenSetup }: { onOpenSetup: () => void
   );
 }
 
-<<<<<<< HEAD
 function FamilyState({ title, body, actionLabel, onAction }: { title: string; body: string; actionLabel?: string; onAction?: () => void }) {
   return <ScreenScroll theme="caregiver"><PageHeader eyebrow="Family" title={title} subtitle={body} theme="caregiver" /><SurfaceCard theme="caregiver" style={styles.membersCard}><Text style={styles.overviewTitle}>{title}</Text><Text style={styles.overviewBody}>{body}</Text>{actionLabel && onAction ? <MenteButton label={actionLabel} onPress={onAction} theme="caregiver" /> : null}</SurfaceCard></ScreenScroll>;
 }
 
-=======
->>>>>>> origin/new_components
 const styles = StyleSheet.create({
   overviewCard: {
     gap: spacing.md,

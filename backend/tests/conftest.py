@@ -5,7 +5,6 @@ from fastapi.testclient import TestClient
 
 from app.config import Settings
 from app.main import create_app
-<<<<<<< HEAD
 from app.security import VerifiedSupabaseClaims
 
 
@@ -15,8 +14,6 @@ class StubSupabaseVerifier:
 
     def verify(self, _token: str) -> VerifiedSupabaseClaims:
         return self.claims
-=======
->>>>>>> origin/new_components
 
 
 @pytest.fixture
@@ -25,7 +22,6 @@ def client(tmp_path) -> Generator[TestClient, None, None]:
     settings = Settings(
         database_url=f"sqlite:///{database_path.as_posix()}",
         auto_create_tables=True,
-<<<<<<< HEAD
         supabase_url="https://mente-test.supabase.co",
         call_bot_api_key="test-call-bot-key-that-is-long-enough",
         cors_origins="http://localhost:19006",
@@ -39,34 +35,18 @@ def client(tmp_path) -> Generator[TestClient, None, None]:
         )
     )
     with TestClient(app) as test_client:
-=======
-        jwt_secret="test-jwt-secret-that-is-long-enough",
-        call_bot_api_key="test-call-bot-key-that-is-long-enough",
-        cors_origins="http://localhost:19006",
-    )
-    with TestClient(create_app(settings)) as test_client:
->>>>>>> origin/new_components
         yield test_client
 
 
 @pytest.fixture
 def caregiver_setup(client: TestClient) -> dict:
     auth = client.post(
-<<<<<<< HEAD
         "/v1/auth/profile",
         headers={"Authorization": "Bearer supabase-access-token"},
         json={"display_name": "Ana"},
     )
     assert auth.status_code == 201, auth.text
     headers = {"Authorization": "Bearer supabase-access-token"}
-=======
-        "/v1/auth/register",
-        json={"email": "ana@example.com", "password": "safe-password", "display_name": "Ana"},
-    )
-    assert auth.status_code == 201, auth.text
-    token = auth.json()["access_token"]
-    headers = {"Authorization": f"Bearer {token}"}
->>>>>>> origin/new_components
 
     family = client.post("/v1/families", headers=headers, json={"name": "Delgado Family", "mode": "GROUP"})
     assert family.status_code == 201, family.text

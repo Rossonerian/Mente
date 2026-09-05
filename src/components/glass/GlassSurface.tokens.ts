@@ -4,6 +4,7 @@ import type { GlassTheme, GlassVariant } from './GlassSurface.types';
 export const glassPalettes = {
   caregiver: {
     backdropColor: caregiverTheme.colors.background,
+    backgroundStops: ['#F8FAFF', '#EEF2FF', '#F8FAFF'],
     accentPrimary: 'rgba(92, 108, 213, 0.12)',
     accentSecondary: 'rgba(165, 139, 218, 0.10)',
     accentOutline: 'rgba(95, 111, 199, 0.13)',
@@ -72,6 +73,7 @@ export const glassPalettes = {
   },
   patient: {
     backdropColor: patientTheme.colors.background,
+    backgroundStops: ['#FFFCF5', '#FFF3E8', '#FFFCF5'],
     accentPrimary: 'rgba(219, 137, 98, 0.13)',
     accentSecondary: 'rgba(235, 176, 121, 0.11)',
     accentOutline: 'rgba(189, 121, 91, 0.13)',
@@ -142,6 +144,10 @@ export const glassPalettes = {
 
 export function getGlassPalette(theme: GlassTheme) {
   return glassPalettes[theme];
+}
+
+export function getRoleBackgroundStops(theme: GlassTheme) {
+  return glassPalettes[theme].backgroundStops;
 }
 
 export function getGlassVisualTokens(theme: GlassTheme, variant: GlassVariant) {

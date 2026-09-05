@@ -21,41 +21,6 @@ export function BottomTabBar({
   const isPatient = role === 'patient';
 
   return (
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
-    <SafeAreaView edges={['bottom']} style={[styles.safeArea, { backgroundColor: theme.colors.surface, borderTopColor: theme.colors.border }]}>
-      <View style={styles.bar}>
-        {tabs.map((tab) => {
-          const isActive = tab.route === activeRoute;
-          return (
-            <FocusablePressable
-              key={tab.route}
-              accessibilityRole="tab"
-              accessibilityLabel={`${tab.label} tab`}
-              accessibilityState={{ selected: isActive }}
-              onPress={() => onNavigate(tab.route)}
-              style={({ pressed, focused }) => [
-                styles.tab,
-                {
-                  borderColor: theme.colors.text,
-                  borderWidth: focused ? 2 : 0,
-                  minHeight: isPatient ? 64 : 52,
-                  opacity: pressed ? 0.68 : 1,
-                },
-              ]}
-            >
-              <View style={[styles.iconWrap, isActive && { backgroundColor: isPatient ? theme.colors.coralSoft : theme.colors.surfaceMuted }]}>
-                <MenteIcon name={isActive ? tab.icon.replace('-outline', '') : tab.icon} size={isPatient ? 24 : 21} color={isActive ? theme.colors.primary : theme.colors.textFaint} />
-              </View>
-              <Text style={[styles.label, { color: isActive ? theme.colors.primary : theme.colors.textFaint, fontSize: isPatient ? 13 : 12 }]}>{tab.label}</Text>
-            </FocusablePressable>
-          );
-        })}
-      </View>
-    </SafeAreaView>
-=======
->>>>>>> origin/new_components
     <GlassSurface theme={role} variant="chrome" radius={0} style={styles.chrome}>
       <SafeAreaView edges={['bottom']}>
         <View style={styles.bar}>
@@ -88,10 +53,6 @@ export function BottomTabBar({
         </View>
       </SafeAreaView>
     </GlassSurface>
-<<<<<<< HEAD
-=======
->>>>>>> 76742b9 (Added basic liquid glass and UI enhancements)
->>>>>>> origin/new_components
   );
 }
 

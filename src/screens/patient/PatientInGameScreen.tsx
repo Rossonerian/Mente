@@ -8,41 +8,34 @@ import { menteMockData } from '../../data/mockData';
 import { getNextPromptIndex } from '../../navigation/interaction';
 import { patientTheme, spacing } from '../../theme/tokens';
 import { GlassSurface } from '../../components/glass/GlassSurface';
-<<<<<<< HEAD
 import { adaptPatientMemoryToPrompt } from '../../api/adapters/caregiverFamily';
 import { isDevelopmentMockMode } from '../../api/config';
-import type { MemoryDto, PatientSessionDto } from '../../api/contracts/patient';
+import type { GameMetricDto, MemoryDto, PatientSessionDto } from '../../api/contracts/patient';
 import { patientDeviceStore } from '../../auth/patientDeviceStore';
-import { createPatientClientId, usePatientGameWrite } from '../../features/patient/usePatientSession';
+import { createSkippedGameMetric, usePatientGameWrite } from '../../features/patient/usePatientSession';
 
 export function PatientInGameScreen({ onComplete, patientToken = null, session = null, memories = [] }: { onComplete: () => void; patientToken?: string | null; session?: PatientSessionDto | null; memories?: MemoryDto[] }) {
   const [promptIndex, setPromptIndex] = useState(0);
   const [message, setMessage] = useState('When you are ready, listen to the moment.');
   const [writeError, setWriteError] = useState<string | null>(null);
   const [failedFinalize, setFailedFinalize] = useState<{ status: 'COMPLETED' | 'EARLY_TERMINATED'; terminationReason?: string } | null>(null);
+  const [failedMetric, setFailedMetric] = useState<{ promptIndex: number; payload: GameMetricDto } | null>(null);
   const { metric, finalize } = usePatientGameWrite(patientToken);
   const prompts = isDevelopmentMockMode ? menteMockData.prompts : memories.map(adaptPatientMemoryToPrompt);
   const prompt = prompts[promptIndex];
 
   if (!prompt) return <ScreenScroll theme="patient"><SoftPanel theme="patient" style={styles.messagePanel}><Text style={styles.messageText}>There are no familiar moments ready right now. You can return whenever it feels right.</Text></SoftPanel></ScreenScroll>;
-=======
-
-export function PatientInGameScreen({ onComplete }: { onComplete: () => void }) {
-  const [promptIndex, setPromptIndex] = useState(0);
-  const [message, setMessage] = useState('When you are ready, listen to the moment.');
-  const prompt = menteMockData.prompts[promptIndex];
->>>>>>> origin/new_components
 
   const handleRepeat = () => {
     setMessage(`I’ll share ${prompt.personName}’s moment again.`);
   };
 
-<<<<<<< HEAD
   const finish = async (status: 'COMPLETED' | 'EARLY_TERMINATED', terminationReason?: string) => {
     if (isDevelopmentMockMode || !session) { onComplete(); return; }
     const payload = { status, termination_reason: terminationReason, metadata_json: { source: 'patient-app' } } as const;
     setWriteError(null);
     setFailedFinalize(null);
+    setFailedMetric(null);
     try {
       await finalize.mutateAsync({ sessionId: session.id, payload });
       await patientDeviceStore.removePendingWrite();
@@ -54,26 +47,35 @@ export function PatientInGameScreen({ onComplete }: { onComplete: () => void }) 
     }
   };
 
-  const handleSkip = async () => {
-    if (!isDevelopmentMockMode && session) {
-      setWriteError(null);
-      try {
-        await metric.mutateAsync({ sessionId: session.id, payload: { client_metric_id: `${session.id}-${prompt.id}`, item_type: 'FAMILIAR_MEMORY', hesitation_count: 0, metadata_json: { client_round_id: createPatientClientId('round'), interaction: 'skip' } } });
-      } catch { setWriteError('Mente could not save that step. Nothing was marked complete. Please try again or stop for now.'); return; }
-    }
-    const nextPromptIndex = getNextPromptIndex(promptIndex, prompts.length);
+  const advanceAfterSkip = async (fromPromptIndex: number) => {
+    const nextPromptIndex = getNextPromptIndex(fromPromptIndex, prompts.length);
     if (nextPromptIndex === null) {
       await finish('COMPLETED');
-=======
-  const handleSkip = () => {
-    const nextPromptIndex = getNextPromptIndex(promptIndex, menteMockData.prompts.length);
-    if (nextPromptIndex === null) {
-      onComplete();
->>>>>>> origin/new_components
       return;
     }
     setPromptIndex(nextPromptIndex);
     setMessage('Here is another familiar moment.');
+  };
+
+  const saveSkip = async (payload: GameMetricDto, fromPromptIndex: number) => {
+    if (isDevelopmentMockMode || !session) {
+      await advanceAfterSkip(fromPromptIndex);
+      return;
+    }
+    setWriteError(null);
+    try {
+      await metric.mutateAsync({ sessionId: session.id, payload });
+      setFailedMetric(null);
+      await advanceAfterSkip(fromPromptIndex);
+    } catch {
+      setFailedMetric({ promptIndex: fromPromptIndex, payload });
+      setWriteError('Mente could not save that step. Nothing was marked complete. Please try saving it again or stop for now.');
+    }
+  };
+
+  const handleSkip = () => {
+    const payload = session ? createSkippedGameMetric(session.id, prompt.id) : { client_metric_id: `mock:${prompt.id}`, item_type: 'FAMILIAR_MEMORY', hesitation_count: 0, metadata_json: { client_round_id: `mock:${prompt.id}`, interaction: 'skip' } } as const;
+    void saveSkip(payload, promptIndex);
   };
 
   return (
@@ -112,14 +114,9 @@ export function PatientInGameScreen({ onComplete }: { onComplete: () => void }) 
       <View style={styles.actionFooter}>
         <Text style={styles.footerPrompt}>Choose what feels right.</Text>
         <MenteButton label="Repeat" onPress={handleRepeat} theme="patient" variant="secondary" iconName="refresh-outline" style={styles.actionButton} />
-<<<<<<< HEAD
-        <MenteButton label={metric.isPending ? 'Saving this step…' : 'Skip'} onPress={() => void handleSkip()} disabled={metric.isPending || finalize.isPending} theme="patient" variant="secondary" iconName="arrow-forward-outline" style={styles.actionButton} />
+        <MenteButton label={metric.isPending ? 'Saving this step…' : 'Skip'} onPress={handleSkip} disabled={metric.isPending || finalize.isPending || Boolean(failedMetric)} theme="patient" variant="secondary" iconName="arrow-forward-outline" style={styles.actionButton} />
         <MenteButton label={finalize.isPending ? 'Saving gentle close…' : 'Stop'} onPress={() => void finish('EARLY_TERMINATED', 'PATIENT_STOP')} disabled={metric.isPending || finalize.isPending} theme="patient" variant="danger" iconName="stop-circle-outline" style={styles.actionButton} accessibilityHint="Ends this moment gently" />
-        {writeError && failedFinalize ? <SoftPanel theme="patient" style={styles.failedWritePanel}><Text accessibilityLiveRegion="polite" style={styles.failedWriteText}>{writeError}</Text><MenteButton label="Try saving again" onPress={() => void finish(failedFinalize.status, failedFinalize.terminationReason)} theme="patient" variant="secondary" /></SoftPanel> : null}
-=======
-        <MenteButton label="Skip" onPress={handleSkip} theme="patient" variant="secondary" iconName="arrow-forward-outline" style={styles.actionButton} />
-        <MenteButton label="Stop" onPress={onComplete} theme="patient" variant="danger" iconName="stop-circle-outline" style={styles.actionButton} accessibilityHint="Ends this moment gently" />
->>>>>>> origin/new_components
+        {writeError ? <SoftPanel theme="patient" style={styles.failedWritePanel}><Text accessibilityLiveRegion="polite" style={styles.failedWriteText}>{writeError}</Text>{failedMetric ? <MenteButton label="Try saving that step again" onPress={() => void saveSkip(failedMetric.payload, failedMetric.promptIndex)} disabled={metric.isPending} theme="patient" variant="secondary" /> : null}{failedFinalize ? <MenteButton label="Try saving again" onPress={() => void finish(failedFinalize.status, failedFinalize.terminationReason)} theme="patient" variant="secondary" /> : null}</SoftPanel> : null}
       </View>
     </ScreenScroll>
   );
@@ -256,11 +253,8 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     lineHeight: 22,
   },
-<<<<<<< HEAD
   failedWritePanel: { backgroundColor: patientTheme.colors.coralSoft, gap: spacing.sm },
   failedWriteText: { color: patientTheme.colors.text, fontSize: 15, fontWeight: '700', lineHeight: 22 },
-=======
->>>>>>> origin/new_components
   actionFooter: {
     gap: spacing.sm,
   },
