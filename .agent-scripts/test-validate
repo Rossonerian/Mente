@@ -1,0 +1,350 @@
+#!/usr/bin/env python3
+"""Exercise positive and negative agent-state validation fixtures."""
+
+from __future__ import annotations
+
+import json
+import shutil
+import subprocess
+import tempfile
+from pathlib import Path
+
+
+SOURCE_ROOT = Path(__file__).resolve().parents[1]
+
+
+def command(*args: str, cwd: Path, check: bool = True) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(args, cwd=cwd, check=check, capture_output=True, text=True)
+
+
+def write_json(path: Path, value: dict) -> None:
+    path.write_text(f"{json.dumps(value, indent=2)}\n", encoding="utf-8")
+
+
+def write_acceptance(root: Path, task_id: str, recommendation: str = "ACCEPT", populated: bool = True) -> Path:
+    path = root / ".agent-state" / "handoffs" / f"{task_id}-acceptance.md"
+    if populated:
+        path.write_text(
+            f"""MILESTONE: {task_id}
+ORIGINAL REQUEST: Validate the fixture organization.
+
+IMPLEMENTED:
+- Fixture controls.
+
+VALIDATION:
+- workflow: PASS
+
+REVIEW:
+- status: APPROVE
+
+BUGS:
+- open critical: none
+
+RISKS:
+- none
+
+SUPERVISOR RECOMMENDATION: {recommendation}
+""",
+            encoding="utf-8",
+        )
+    else:
+        path.write_text("incomplete\n", encoding="utf-8")
+    return path
+
+
+def make_task(root: Path, task_id: str, owner: str, scope: str) -> dict:
+    return {
+        "id": task_id,
+        "claim_key": f"fixture.{task_id.lower()}",
+        "title": f"Fixture {task_id}",
+        "type": "BUG" if owner == "BUG-FIXER" else "TASK",
+        "owner": owner,
+        "model_class": "TINY",
+        "priority": "MEDIUM",
+        "status": "IN_PROGRESS",
+        "objective": f"Validate {task_id} isolation.",
+        "dependencies": [],
+        "execution_mode": "WRITE",
+        "allowed_scope": [scope],
+        "read_only_scope": ["README.md"],
+        "forbidden_scope": ["unrelated/**"],
+        "acceptance_criteria": ["Fixture passes"],
+        "required_tests": ["fixture test"],
+        "workspace": str((root / ".agent-worktrees" / task_id).resolve()),
+        "branch": f"agent/{task_id}",
+        "result": None,
+        "review_status": "NOT_STARTED",
+        "qa_status": "NOT_STARTED",
+        "blockers": [],
+    }
+
+
+def run_validator(root: Path) -> subprocess.CompletedProcess[str]:
+    return command(str(root / ".agent-scripts" / "validate"), cwd=root, check=False)
+
+
+def expect_failure(root: Path, expected: str) -> None:
+    result = run_validator(root)
+    output = f"{result.stdout}\n{result.stderr}"
+    if result.returncode == 0 or expected not in output:
+        raise AssertionError(f"expected validator failure containing {expected!r}, got:\n{output}")
+
+
+def setup_fixture(root: Path) -> dict[str, dict]:
+    shutil.copy2(SOURCE_ROOT / "AGENTS.md", root / "AGENTS.md")
+    shutil.copytree(SOURCE_ROOT / ".agents", root / ".agents")
+    shutil.copytree(SOURCE_ROOT / ".agent-scripts", root / ".agent-scripts")
+    shutil.copytree(SOURCE_ROOT / ".agent-state", root / ".agent-state")
+    shutil.rmtree(root / ".agent-state" / "tasks")
+    (root / ".agent-state" / "tasks").mkdir()
+    shutil.rmtree(root / ".agent-state" / "dry-runs")
+
+    (root / "README.md").write_text("fixture\n", encoding="utf-8")
+    command("git", "init", "-q", cwd=root)
+    command("git", "config", "user.email", "fixture@example.invalid", cwd=root)
+    command("git", "config", "user.name", "Agent Validator Fixture", cwd=root)
+    command("git", "add", ".", cwd=root)
+    command("git", "commit", "-qm", "fixture baseline", cwd=root)
+
+    tasks = {
+        "BE-001": make_task(root, "BE-001", "BACKEND", "backend/feature-a/**"),
+        "FE-001": make_task(root, "FE-001", "FRONTEND", "src/feature-b/**"),
+        "BUG-001": make_task(root, "BUG-001", "BUG-FIXER", "src/feature-c/**"),
+    }
+    for task_id, task in tasks.items():
+        write_json(root / ".agent-state" / "tasks" / f"{task_id}.json", task)
+        command(
+            "git",
+            "worktree",
+            "add",
+            "-q",
+            "-b",
+            f"agent/{task_id}",
+            str(root / ".agent-worktrees" / task_id),
+            "HEAD",
+            cwd=root,
+        )
+    return tasks
+
+
+def main() -> int:
+    with tempfile.TemporaryDirectory(prefix="mente-agent-validator-") as directory:
+        root = Path(directory)
+        tasks = setup_fixture(root)
+
+        valid = run_validator(root)
+        if valid.returncode != 0:
+            raise AssertionError(f"three valid disjoint writers were rejected:\n{valid.stdout}\n{valid.stderr}")
+
+        fourth = make_task(root, "INT-001", "INTEGRATION", "integration/**")
+        write_json(root / ".agent-state" / "tasks" / "INT-001.json", fourth)
+        expect_failure(root, "exceed policy limit 3")
+        (root / ".agent-state" / "tasks" / "INT-001.json").unlink()
+
+        tasks["BE-001"]["workspace"] = None
+        write_json(root / ".agent-state" / "tasks" / "BE-001.json", tasks["BE-001"])
+        expect_failure(root, "requires canonical workspace")
+        tasks["BE-001"]["workspace"] = str((root / ".agent-worktrees" / "BE-001").resolve())
+        write_json(root / ".agent-state" / "tasks" / "BE-001.json", tasks["BE-001"])
+
+        tasks["FE-001"]["branch"] = "agent/BE-001"
+        write_json(root / ".agent-state" / "tasks" / "FE-001.json", tasks["FE-001"])
+        expect_failure(root, "active writers share branch")
+        tasks["FE-001"]["branch"] = "agent/FE-001"
+        write_json(root / ".agent-state" / "tasks" / "FE-001.json", tasks["FE-001"])
+
+        tasks["FE-001"]["workspace"] = tasks["BE-001"]["workspace"]
+        write_json(root / ".agent-state" / "tasks" / "FE-001.json", tasks["FE-001"])
+        expect_failure(root, "active writers share workspace")
+        tasks["FE-001"]["workspace"] = str((root / ".agent-worktrees" / "FE-001").resolve())
+        write_json(root / ".agent-state" / "tasks" / "FE-001.json", tasks["FE-001"])
+
+        command("git", "worktree", "remove", str(root / ".agent-worktrees" / "BUG-001"), cwd=root)
+        expect_failure(root, "canonical Git worktree/branch is not registered")
+        command(
+            "git",
+            "worktree",
+            "add",
+            "-q",
+            str(root / ".agent-worktrees" / "BUG-001"),
+            "agent/BUG-001",
+            cwd=root,
+        )
+
+        tasks["BE-001"]["allowed_scope"] = ["src/**"]
+        tasks["FE-001"]["allowed_scope"] = ["src/foo.ts"]
+        write_json(root / ".agent-state" / "tasks" / "BE-001.json", tasks["BE-001"])
+        write_json(root / ".agent-state" / "tasks" / "FE-001.json", tasks["FE-001"])
+        expect_failure(root, "overlapping write scope")
+        tasks["BE-001"]["allowed_scope"] = ["backend/feature-a/**"]
+
+        tasks["BE-001"]["allowed_scope"] = ["./"]
+        write_json(root / ".agent-state" / "tasks" / "BE-001.json", tasks["BE-001"])
+        expect_failure(root, "overlapping write scope")
+        tasks["BE-001"]["allowed_scope"] = ["backend/feature-a/**"]
+
+        for root_scope in ("/", "*", "**"):
+            tasks["BE-001"]["allowed_scope"] = [root_scope]
+            write_json(root / ".agent-state" / "tasks" / "BE-001.json", tasks["BE-001"])
+            expect_failure(root, "overlapping write scope")
+        tasks["BE-001"]["allowed_scope"] = ["backend/feature-a/**"]
+
+        tasks["BE-001"]["allowed_scope"] = ["**/*.ts"]
+        write_json(root / ".agent-state" / "tasks" / "BE-001.json", tasks["BE-001"])
+        expect_failure(root, "overlapping write scope")
+        tasks["BE-001"]["allowed_scope"] = ["backend/feature-a/**"]
+        tasks["FE-001"]["allowed_scope"] = ["src/feature-b/**"]
+
+        tasks["FE-001"]["allowed_scope"] = "src/**"
+        write_json(root / ".agent-state" / "tasks" / "FE-001.json", tasks["FE-001"])
+        expect_failure(root, "allowed_scope must be a list")
+        tasks["FE-001"]["allowed_scope"] = ["src/feature-b/**"]
+
+        tasks["FE-001"]["type"] = "TYPO"
+        write_json(root / ".agent-state" / "tasks" / "FE-001.json", tasks["FE-001"])
+        expect_failure(root, "invalid task type TYPO")
+        tasks["FE-001"]["type"] = "TASK"
+
+        tasks["BE-001"]["allowed_scope"] = ["."]
+        write_json(root / ".agent-state" / "tasks" / "BE-001.json", tasks["BE-001"])
+        write_json(root / ".agent-state" / "tasks" / "FE-001.json", tasks["FE-001"])
+        expect_failure(root, "overlapping write scope")
+        tasks["BE-001"]["allowed_scope"] = ["backend/feature-a/**"]
+
+        tasks["FE-001"]["claim_key"] = tasks["BE-001"]["claim_key"]
+        write_json(root / ".agent-state" / "tasks" / "FE-001.json", tasks["FE-001"])
+        expect_failure(root, "duplicate active claim_key")
+        tasks["FE-001"]["claim_key"] = "fixture.fe-001"
+
+        tasks["FE-001"]["dependencies"] = ["BE-001"]
+        write_json(root / ".agent-state" / "tasks" / "FE-001.json", tasks["FE-001"])
+        expect_failure(root, "active task has unfinished dependencies")
+        tasks["FE-001"]["dependencies"] = []
+
+        tasks["BE-001"]["status"] = "BLOCKED"
+        tasks["BE-001"]["blockers"] = []
+        write_json(root / ".agent-state" / "tasks" / "BE-001.json", tasks["BE-001"])
+        expect_failure(root, "BLOCKED task requires blocker details")
+        tasks["BE-001"]["status"] = "IN_PROGRESS"
+
+        tasks["BE-001"]["blockers"] = [{}]
+        write_json(root / ".agent-state" / "tasks" / "BE-001.json", tasks["BE-001"])
+        expect_failure(root, "malformed blocker entry")
+        tasks["BE-001"]["blockers"] = [
+            {
+                "task": "BE-001",
+                "blocker": "Fixture blocker",
+                "blocking_task_or_dependency": None,
+                "owner": "BACKEND",
+                "action_required": "Clear fixture blocker",
+            }
+        ]
+        write_json(root / ".agent-state" / "tasks" / "BE-001.json", tasks["BE-001"])
+        expect_failure(root, "only BLOCKED tasks may contain blocker details")
+
+        tasks["BE-001"]["status"] = "BLOCKED"
+        tasks["BE-001"]["blockers"][0]["blocking_task_or_dependency"] = 7
+        write_json(root / ".agent-state" / "tasks" / "BE-001.json", tasks["BE-001"])
+        expect_failure(root, "blocker dependency must be a non-empty task id or null")
+
+        tasks["BE-001"]["blockers"][0]["blocking_task_or_dependency"] = "FE-001"
+        write_json(root / ".agent-state" / "tasks" / "BE-001.json", tasks["BE-001"])
+        expect_failure(root, "blocker dependency FE-001 must be a declared dependency")
+        tasks["BE-001"]["status"] = "IN_PROGRESS"
+        tasks["BE-001"]["blockers"] = []
+
+        milestone = make_task(root, "ORG-999", "SUPERVISOR", ".agent-state/**")
+        acceptance_path = ".agent-state/handoffs/ORG-999-acceptance.md"
+        milestone.update(
+            {
+                "claim_key": "fixture.premature-milestone",
+                "type": "MILESTONE",
+                "status": "READY_FOR_ACCEPTANCE",
+                "execution_mode": "READ_ONLY",
+                "workspace": None,
+                "branch": None,
+                "review_status": "APPROVE",
+                "qa_status": "PASS",
+                "result": {
+                    "supervisor_recommendation": "ACCEPT",
+                    "acceptance_package": acceptance_path,
+                },
+            }
+        )
+        write_acceptance(root, "ORG-999")
+
+        milestone["type"] = "MILSTONE"
+        write_json(root / ".agent-state" / "tasks" / "ORG-999.json", milestone)
+        expect_failure(root, "invalid task type MILSTONE")
+        milestone["type"] = "MILESTONE"
+
+        milestone["type"] = "TASK"
+        write_json(root / ".agent-state" / "tasks" / "ORG-999.json", milestone)
+        expect_failure(root, "READY_FOR_ACCEPTANCE is reserved for MILESTONE tasks")
+        milestone["type"] = "MILESTONE"
+
+        milestone["review_status"] = "PENDING"
+        write_json(root / ".agent-state" / "tasks" / "ORG-999.json", milestone)
+        expect_failure(root, "acceptance requires REVIEWER approval")
+        milestone["review_status"] = "APPROVE"
+
+        milestone["qa_status"] = "PENDING"
+        write_json(root / ".agent-state" / "tasks" / "ORG-999.json", milestone)
+        expect_failure(root, "acceptance requires QA PASS")
+        milestone["qa_status"] = "PASS"
+
+        milestone["result"].pop("supervisor_recommendation")
+        write_json(root / ".agent-state" / "tasks" / "ORG-999.json", milestone)
+        expect_failure(root, "acceptance requires Supervisor recommendation")
+        milestone["result"]["supervisor_recommendation"] = "ACCEPT"
+
+        milestone["result"]["acceptance_package"] = "AGENTS.md"
+        write_json(root / ".agent-state" / "tasks" / "ORG-999.json", milestone)
+        expect_failure(root, "acceptance package must be .agent-state/handoffs/ORG-999-acceptance.md")
+        milestone["result"]["acceptance_package"] = acceptance_path
+
+        write_acceptance(root, "ORG-999", populated=False)
+        write_json(root / ".agent-state" / "tasks" / "ORG-999.json", milestone)
+        expect_failure(root, "acceptance package is not populated with canonical evidence")
+
+        (root / acceptance_path).write_text(
+            """MILESTONE: ORG-999
+ORIGINAL REQUEST:
+IMPLEMENTED:
+VALIDATION:
+REVIEW:
+BUGS:
+RISKS:
+SUPERVISOR RECOMMENDATION: ACCEPT
+""",
+            encoding="utf-8",
+        )
+        write_json(root / ".agent-state" / "tasks" / "ORG-999.json", milestone)
+        expect_failure(root, "acceptance package is not populated with canonical evidence")
+        write_acceptance(root, "ORG-999")
+
+        milestone["status"] = "DONE"
+        write_json(root / ".agent-state" / "tasks" / "ORG-999.json", milestone)
+        expect_failure(root, "DONE milestone lacks BOSS acceptance evidence")
+
+        (root / ".agent-state" / "tasks" / "ORG-999.json").unlink()
+        (root / acceptance_path).unlink()
+
+        reviewer = root / ".agents" / "reviewer.md"
+        reviewer_backup = reviewer.with_suffix(".bak")
+        reviewer.rename(reviewer_backup)
+        expect_failure(root, "missing required file: .agents/reviewer.md")
+        reviewer_backup.rename(reviewer)
+
+        for task_id, task in tasks.items():
+            write_json(root / ".agent-state" / "tasks" / f"{task_id}.json", task)
+        final = run_validator(root)
+        if final.returncode != 0:
+            raise AssertionError(f"restored valid fixture failed:\n{final.stdout}\n{final.stderr}")
+
+    print("Agent validator fixtures passed: valid-three plus concurrency, workspace, branch, scope, claim, schema, dependency, blocker, milestone-gate, and required-file guards")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

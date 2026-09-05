@@ -1,0 +1,44 @@
+{
+  "id": "BASE-001",
+  "claim_key": "frontend.resolve-conflict-markers",
+  "title": "Resolve committed conflict markers",
+  "type": "BUG",
+  "owner": "BUG-FIXER",
+  "model_class": "COMPLEX",
+  "priority": "CRITICAL",
+  "status": "DONE",
+  "objective": "Restore parseable, internally compatible frontend dependency and navigation files before frontend or integration work.",
+  "dependencies": [],
+  "execution_mode": "WRITE",
+  "allowed_scope": ["package.json", "package-lock.json", "src/components/BottomTabBar.tsx"],
+  "read_only_scope": ["app.json", "src/components/glass/**", "node_modules/**"],
+  "forbidden_scope": ["backend/**", "deployment", "credentials", "pushes"],
+  "acceptance_criteria": [
+    "No conflict markers remain",
+    "Expo and React Native versions are mutually compatible",
+    "Frontend quality gate passes"
+  ],
+  "required_tests": ["npm run typecheck", "npm run lint", "npm test -- --no-cache", "npx expo-doctor", "npm run web:export", "git diff --check"],
+  "workspace": "/home/rosso/Projects/Mente",
+  "branch": "main",
+  "result": {
+    "resolution": "Selected the internally consistent SDK 57 / React Native 0.86 glass implementation and restored its intact generated lockfile, then aligned Expo to 57.0.20 with Expo's supported installer.",
+    "self_test": {
+      "npm_ci": "PASS",
+      "typecheck": "PASS",
+      "lint": "PASS",
+      "jest": "PASS: 3 suites / 15 tests",
+      "expo_doctor": "PASS: 21/21",
+      "web_export": "PASS",
+      "diff_check": "PASS",
+      "conflict_scan": "PASS"
+    },
+    "warnings": [
+      "npm reported 10 moderate transitive advisories; no force-upgrade was attempted",
+      "npm skipped the unapproved unrs-resolver 1.12.2 postinstall under npm 11's install-script policy"
+    ]
+  },
+  "review_status": "NOT_REQUIRED",
+  "qa_status": "PASS",
+  "blockers": []
+}

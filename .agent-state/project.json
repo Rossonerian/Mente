@@ -1,0 +1,58 @@
+{
+  "project": "Mente",
+  "status": "ACTIVE",
+  "primary_interface": "BOSS",
+  "milestone_completion_authority": "BOSS",
+  "state_version": 1,
+  "capabilities": {
+    "subagents": {
+      "available": true,
+      "tool_family": "multi_agent_v1",
+      "operations": ["spawn", "send_input", "wait", "resume", "close"],
+      "persistent_processes": false
+    },
+    "model_overrides": [
+      "gpt-5.6-luna",
+      "gpt-5.6-terra",
+      "gpt-5.6-sol",
+      "gpt-5.5",
+      "gpt-5.4"
+    ],
+    "parallel_execution": {
+      "available": true,
+      "runtime_limit": "UNDETECTED",
+      "policy_max_implementation_workers": 3
+    },
+    "git_worktrees": true,
+    "codex_shell_command_on_path": false,
+    "zed": {
+      "detected_version": "1.18.0",
+      "codex_acp_configured": true,
+      "repository_can_enforce_zed_model": false
+    }
+  },
+  "paths": {
+    "roles": ".agents",
+    "tasks": ".agent-state/tasks",
+    "bugs": ".agent-state/bugs",
+    "handoffs": ".agent-state/handoffs",
+    "decisions": ".agent-state/decisions",
+    "worktrees": ".agent-worktrees"
+  },
+  "quality_commands": {
+    "frontend": [
+      "npm run typecheck",
+      "npm run lint",
+      "npm test -- --no-cache",
+      "npx expo-doctor",
+      "npm run web:export"
+    ],
+    "backend": [
+      "cd backend && python3 -m pytest",
+      "cd backend && python3 -m ruff check .",
+      "cd backend && python3 -m mypy app",
+      "cd backend && python3 -m bandit -q -r app",
+      "cd backend && python3 -m pip_audit -r requirements.lock"
+    ]
+  }
+}

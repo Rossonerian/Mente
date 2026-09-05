@@ -1,5 +1,9 @@
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+<<<<<<< HEAD
+from typing import NoReturn
+=======
+>>>>>>> origin/new_components
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -9,6 +13,15 @@ from .config import Settings, get_settings
 from .database import Base, create_database_engine, create_session_factory
 from .rate_limit import FixedWindowRateLimiter
 from .routers import alerts, auth, devices, families, integrations, memories, patients, sessions, settings
+<<<<<<< HEAD
+from .security import SupabaseTokenConfigurationError, SupabaseTokenVerifier
+
+
+class _UnavailableSupabaseTokenVerifier:
+    def verify(self, _token: str) -> NoReturn:
+        raise SupabaseTokenConfigurationError("SUPABASE_URL is not configured")
+=======
+>>>>>>> origin/new_components
 
 
 def create_app(settings_override: Settings | None = None) -> FastAPI:
@@ -36,6 +49,13 @@ def create_app(settings_override: Settings | None = None) -> FastAPI:
     app.state.engine = engine
     app.state.session_factory = session_factory
     app.state.rate_limiter = FixedWindowRateLimiter()
+<<<<<<< HEAD
+    app.state.caregiver_token_verifier = SupabaseTokenVerifier(
+        settings_value.supabase_url,
+        settings_value.supabase_jwt_audience,
+    ) if settings_value.supabase_url else _UnavailableSupabaseTokenVerifier()
+=======
+>>>>>>> origin/new_components
 
     app.add_middleware(
         CORSMiddleware,

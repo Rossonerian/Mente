@@ -131,13 +131,21 @@ def test_production_configuration_rejects_development_defaults() -> None:
     with pytest.raises(ValidationError):
         Settings(
             environment="production",
+<<<<<<< HEAD
+            supabase_url="https://mente-test.supabase.co",
+=======
             jwt_secret="replace-with-at-least-32-random-characters",
+>>>>>>> origin/new_components
             call_bot_api_key="replace-with-a-different-long-random-key",
         )
 
     production = Settings(
         environment="production",
+<<<<<<< HEAD
+        supabase_url="https://mente-test.supabase.co",
+=======
         jwt_secret="production-jwt-secret-with-at-least-32-characters",
+>>>>>>> origin/new_components
         call_bot_api_key="production-callbot-key-with-at-least-32-characters",
     )
     assert production.auto_create_tables is False

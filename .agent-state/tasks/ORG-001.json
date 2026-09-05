@@ -1,0 +1,60 @@
+{
+  "id": "ORG-001",
+  "claim_key": "organization.setup.v1",
+  "title": "Install the repository engineering organization",
+  "type": "MILESTONE",
+  "owner": "SUPERVISOR",
+  "model_class": "CRITICAL",
+  "priority": "HIGH",
+  "status": "DONE",
+  "objective": "Create a persistent, cost-controlled, evidence-based multi-agent workflow using actual environment capabilities.",
+  "dependencies": [],
+  "execution_mode": "WRITE",
+  "allowed_scope": ["AGENTS.md", ".agents/**", ".agent-state/**", ".agent-scripts/**", ".gitignore"],
+  "read_only_scope": ["package.json", "backend/**", "src/**", "*.md", "app.json", "eas.json"],
+  "forbidden_scope": ["application behavior", "dependencies", "CI/deployment changes", "credentials", "commits", "pushes"],
+  "acceptance_criteria": [
+    "Roles and authority are explicit",
+    "Tasks and dashboard survive new sessions",
+    "Parallel writers require isolated worktrees and disjoint ownership",
+    "Model routing uses only detected choices",
+    "Milestones require independent BOSS acceptance",
+    "Dry run blocks premature integration",
+    "Workflow validation passes"
+  ],
+  "required_tests": [
+    "./.agent-scripts/validate",
+    "./.agent-scripts/test-validate",
+    "bash -n .agent-scripts/status .agent-scripts/create-worktree .agent-scripts/cleanup-worktree",
+    "git diff --check"
+  ],
+  "workspace": "/home/rosso/Projects/Mente",
+  "branch": "main",
+  "result": {
+    "review_round": 4,
+    "prior_review_verdicts": ["REQUEST_CHANGES", "REQUEST_CHANGES", "REQUEST_CHANGES"],
+    "remediation": [
+      "Validator now enforces the three-writer policy, canonical registered worktrees, unique branches/workspaces, ready dependencies, and semantic scope isolation",
+      "Milestones cannot enter READY_FOR_ACCEPTANCE or DONE without Reviewer, QA, Supervisor, acceptance-package, and BOSS evidence",
+      "Task claim uniqueness, field types, blocker consistency, required organization files, and negative fixtures are enforced",
+      "Task type values, canonical populated acceptance packages, repository-root scope conflicts, and blocker dependency references are now enforced",
+      "Every acceptance section must contain substantive evidence; headings-only files are rejected"
+    ],
+    "supervisor_validation": {
+      "workflow_state": "PASS",
+      "validator_fixtures": "PASS",
+      "script_syntax": "PASS",
+      "python_compile": "PASS",
+      "diff_check": "PASS"
+    },
+    "acceptance_package": ".agent-state/handoffs/ORG-001-acceptance.md",
+    "supervisor_recommendation": "ACCEPT",
+    "accepted_by": "BOSS",
+    "boss_decision": "ACCEPT",
+    "accepted_on": "2026-09-04",
+    "required_follow_up": "None for ORG-001; application findings remain separate tasks."
+  },
+  "review_status": "APPROVE",
+  "qa_status": "PASS",
+  "blockers": []
+}

@@ -1,0 +1,55 @@
+{
+  "id": "MENTE-001",
+  "claim_key": "frontend.fastapi-tamagui-integration",
+  "title": "Replace mock-only frontend with typed FastAPI integration and selective Tamagui",
+  "type": "MILESTONE",
+  "owner": "SUPERVISOR",
+  "model_class": "CRITICAL",
+  "priority": "CRITICAL",
+  "status": "DONE",
+  "objective": "Integrate caregiver and patient experiences with the verified FastAPI contract, preserve platform safety boundaries, then add targeted Tamagui primitives and complete cross-platform verification.",
+  "dependencies": ["BASE-001"],
+  "execution_mode": "WRITE",
+  "allowed_scope": ["src/**", "App.tsx", "package.json", "package-lock.json", "babel.config.js", "app.json", "backend/app/**", "backend/tests/**", ".agent-state/**"],
+  "read_only_scope": ["prd.md", "architecture.md", "integration-data-flow.md", "development-phases.md", "skills-tech-stack.md", "eas.json"],
+  "forbidden_scope": ["credentials", "production data", "remote builds", "deployment", "pushes", "pull requests", "navigation replacement", "Gluestack UI", "UI Kitten"],
+  "acceptance_criteria": [
+    "FastAPI/OpenAPI contracts and gaps are verified before client implementation",
+    "Caregiver and patient credentials remain strictly separated",
+    "Screens consume typed feature view models rather than direct fetch calls",
+    "Production-like builds never silently fall back to mock data",
+    "Caregiver and patient flows have loading, stale, offline, retry, and failed-write behavior appropriate to their roles",
+    "Only Tamagui is introduced as a UI library and only after a passing integration slice",
+    "Existing navigation, glass architecture, identifiers, accessibility, and dignity constraints remain intact",
+    "Frontend, backend, contract, integration, browser, and available native-device gates pass",
+    "Independent Reviewer approves before BOSS acceptance"
+  ],
+  "required_tests": [
+    "npm run typecheck",
+    "npm run lint",
+    "npm test -- --no-cache",
+    "npx expo-doctor",
+    "npm run web:export",
+    "backend isolated pytest/ruff/mypy/bandit/pip-audit",
+    "OpenAPI contract verification",
+    "local integration tests",
+    "browser checks at 320/768/1024/1440",
+    "git diff --check"
+  ],
+  "workspace": "/home/rosso/Projects/Mente",
+  "branch": "feature/mente-backend-data-polish",
+  "result": {
+    "summary": "Typed FastAPI clients, React Query, RHF/Zod caregiver setup and settings, device-token patient game writes, selective Tamagui inputs, contract checks, and backend response typing are complete and reviewed.",
+    "acceptance_package": ".agent-state/handoffs/MENTE-001-acceptance.md",
+    "supervisor_recommendation": "ACCEPT",
+    "accepted_by": "BOSS",
+    "boss_decision": "ACCEPT",
+    "limitations": [
+      "Live browser caregiver save requires a non-production Supabase session and seeded local backend fixture; neither is configured in this workspace.",
+      "No authorized Android or iOS device/simulator is attached for physical validation."
+    ]
+  },
+  "review_status": "APPROVE",
+  "qa_status": "PASS",
+  "blockers": []
+}

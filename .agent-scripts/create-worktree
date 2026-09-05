@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [[ $# -ne 1 || ! "$1" =~ ^[A-Z]+-[0-9]+$ ]]; then
+  echo "usage: .agent-scripts/create-worktree TASK-ID" >&2
+  exit 64
+fi
+
+task_id=$1
+repository_root=$(git rev-parse --show-toplevel)
+task_file="$repository_root/.agent-state/tasks/$task_id.json"
+workspace="$repository_root/.agent-worktrees/$task_id"
+branch="agent/$task_id"
+
+if [[ ! -f "$task_file" ]]; then
+  echo "task does not exist: $task_file" >&2
+  exit 66
+fi
+
+"$repository_root/.agent-scripts/validate"
+
+if [[ -n "$(git -C "$repository_root" status --porcelain)" ]]; then
+  echo "main worktree is dirty; preserve or explicitly resolve it before branching from HEAD" >&2
+  exit 65
+fi
+
+if [[ -e "$workspace" ]]; then
+  echo "workspace already exists: $workspace" >&2
+  exit 73
+fi
+
+if git -C "$repository_root" show-ref --verify --quiet "refs/heads/$branch"; then
+  echo "branch already exists: $branch" >&2
+  exit 73
+fi
+
+git -C "$repository_root" worktree add -b "$branch" "$workspace" HEAD
+echo "created $workspace on $branch"
+echo "update $task_file workspace/branch/status before assigning a writer"

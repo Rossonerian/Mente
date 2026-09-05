@@ -5,3 +5,7 @@ web-build/
 coverage/
 *.log
 .DS_Store
+<<<<<<< HEAD
+.agent-worktrees/
+=======
+>>>>>>> origin/new_components
