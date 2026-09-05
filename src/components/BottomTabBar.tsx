@@ -22,6 +22,8 @@ export function BottomTabBar({
 
   return (
 <<<<<<< HEAD
+=======
+<<<<<<< HEAD
     <SafeAreaView edges={['bottom']} style={[styles.safeArea, { backgroundColor: theme.colors.surface, borderTopColor: theme.colors.border }]}>
       <View style={styles.bar}>
         {tabs.map((tab) => {
@@ -53,6 +55,7 @@ export function BottomTabBar({
       </View>
     </SafeAreaView>
 =======
+>>>>>>> origin/new_components
     <GlassSurface theme={role} variant="chrome" radius={0} style={styles.chrome}>
       <SafeAreaView edges={['bottom']}>
         <View style={styles.bar}>
@@ -85,7 +88,10 @@ export function BottomTabBar({
         </View>
       </SafeAreaView>
     </GlassSurface>
+<<<<<<< HEAD
+=======
 >>>>>>> 76742b9 (Added basic liquid glass and UI enhancements)
+>>>>>>> origin/new_components
   );
 }
 

@@ -8,10 +8,34 @@ import { ScreenScroll } from '../../components/Screen';
 import { menteMockData } from '../../data/mockData';
 import { patientTheme, spacing } from '../../theme/tokens';
 import { GlassSurface } from '../../components/glass/GlassSurface';
+<<<<<<< HEAD
+import { adaptMemoryToFamilyMember } from '../../api/adapters/caregiverFamily';
+import { isDevelopmentMockMode } from '../../api/config';
+import { usePatientMemoryQuery } from '../../features/patient/usePatientSession';
+import type { FamilyMember } from '../../types';
+
+export function PatientFamilyScreen({ patientToken = null }: { patientToken?: string | null }) {
+  if (isDevelopmentMockMode) return <PatientFamilyContent family={menteMockData.family} />;
+  return <ConnectedPatientFamily patientToken={patientToken} />;
+}
+
+function ConnectedPatientFamily({ patientToken }: { patientToken: string | null }) {
+  const memories = usePatientMemoryQuery(patientToken);
+  if (memories.isPending) return <FamilyState title="Getting family memories ready" body="Loading familiar memories…" />;
+  if (memories.error instanceof Error) return <FamilyState title="Family memories are unavailable" body="Reconnect and try again when you are ready." actionLabel="Try again" onAction={() => void memories.refetch()} />;
+  const family = (memories.data ?? []).map(adaptMemoryToFamilyMember);
+  if (!family.length) return <FamilyState title="No family memories are ready" body="A caregiver can add consented familiar memories before this view is ready." />;
+  return <PatientFamilyContent family={family} />;
+}
+
+function PatientFamilyContent({ family }: { family: FamilyMember[] }) {
+  const [playedName, setPlayedName] = useState<string | null>(null);
+=======
 
 export function PatientFamilyScreen() {
   const [playedName, setPlayedName] = useState<string | null>(null);
   const { family } = menteMockData;
+>>>>>>> origin/new_components
   const selectedMember = playedName ? family.find((member) => member.name.startsWith(playedName)) : undefined;
 
   return (
@@ -40,7 +64,11 @@ export function PatientFamilyScreen() {
       {playedName ? (
         <SoftPanel theme="patient" style={styles.playedPanel}>
           <Text style={styles.playedTitle}>A hello from {playedName}</Text>
+<<<<<<< HEAD
+          <Text style={styles.playedBody}>Take a quiet moment with this familiar memory. There is nothing to get right.</Text>
+=======
           <Text style={styles.playedBody}>This voice moment is represented locally in the preview.</Text>
+>>>>>>> origin/new_components
         </SoftPanel>
       ) : null}
       <MenteButton
@@ -56,6 +84,11 @@ export function PatientFamilyScreen() {
   );
 }
 
+<<<<<<< HEAD
+function FamilyState({ title, body, actionLabel, onAction }: { title: string; body: string; actionLabel?: string; onAction?: () => void }) { return <ScreenScroll theme="patient"><PageHeader eyebrow="Familiar people" title={title} subtitle={body} theme="patient" /><SurfaceCard theme="patient" style={styles.membersCard}><Text style={styles.introTitle}>{title}</Text><Text style={styles.introBody}>{body}</Text>{actionLabel && onAction ? <MenteButton label={actionLabel} onPress={onAction} theme="patient" /> : null}</SurfaceCard></ScreenScroll>; }
+
+=======
+>>>>>>> origin/new_components
 const styles = StyleSheet.create({
   introCard: {
     gap: spacing.xs,

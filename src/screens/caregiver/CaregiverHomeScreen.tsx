@@ -11,6 +11,45 @@ import { SectionHeader } from '../../components/SectionHeader';
 import { StatusPill } from '../../components/StatusPill';
 import { GlassSurface } from '../../components/glass/GlassSurface';
 import { caregiverTheme, spacing } from '../../theme/tokens';
+<<<<<<< HEAD
+import type { CaregiverRoute } from '../../types';
+import { useResponsiveLayout } from '../../hooks/useResponsiveLayout';
+import { useMemo, useState } from 'react';
+import { useCaregiverOverview } from '../../features/caregiver/useCaregiverOverview';
+import { CaregiverLoadingScreen, CaregiverProfileSetupScreen } from './CaregiverAccessScreen';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { createCaregiverClient } from '../../api/caregiverClient';
+import { isDevelopmentMockMode } from '../../api/config';
+
+export function CaregiverHomeScreen({ onNavigate, accessToken, caregiverId }: { onNavigate: (route: CaregiverRoute) => void; accessToken: string | null; caregiverId: string | null }) {
+  const [checkInNoted, setCheckInNoted] = useState(false);
+  const [acknowledgementError, setAcknowledgementError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
+  const client = useMemo(() => {
+    if (!accessToken || isDevelopmentMockMode) return null;
+    try { return createCaregiverClient(accessToken); } catch { return null; }
+  }, [accessToken]);
+  const acknowledge = useMutation({
+    mutationFn: ({ patientId, alertId }: { patientId: string; alertId: string }) => client!.acknowledgeAlert(patientId, alertId),
+    onSuccess: (_data, variables) => { void queryClient.invalidateQueries({ queryKey: ['caregiver', caregiverId, 'patient', variables.patientId] }); },
+  });
+  const overview = useCaregiverOverview(accessToken, caregiverId);
+  const { isWideWeb } = useResponsiveLayout();
+  if (overview.kind === 'loading') return <CaregiverLoadingScreen />;
+  if (overview.kind === 'profile-required' && accessToken) {
+    return <CaregiverProfileSetupScreen accessToken={accessToken} onComplete={overview.retry} />;
+  }
+  if (overview.kind === 'empty') return <CaregiverEmptyState />;
+  if (overview.kind === 'error') return <CaregiverErrorState error={overview.error.message} onRetry={overview.retry} hasStaleData={Boolean(overview.staleData)} />;
+  const mockData = overview.kind === 'mock' ? overview.data : null;
+  const data = overview.kind === 'ready' ? overview.data : mockData!;
+  const livePatientId = overview.kind === 'ready' ? overview.data.patient.id : null;
+  const patient = data.patient;
+  const family = mockData?.family ?? [];
+  const sessions = data.sessions;
+  const alert = mockData?.alert ?? (overview.kind === 'ready' ? overview.data.alerts[0] : undefined);
+  const trend = data.trend;
+=======
 import { menteMockData } from '../../data/mockData';
 import type { CaregiverRoute } from '../../types';
 import { useResponsiveLayout } from '../../hooks/useResponsiveLayout';
@@ -20,6 +59,7 @@ export function CaregiverHomeScreen({ onNavigate }: { onNavigate: (route: Caregi
   const [checkInNoted, setCheckInNoted] = useState(false);
   const { patient, family, sessions, alert, trend } = menteMockData;
   const { isWideWeb } = useResponsiveLayout();
+>>>>>>> origin/new_components
   const voiceCount = family.filter((member) => member.voiceAvailable).length;
 
   return (
@@ -55,7 +95,11 @@ export function CaregiverHomeScreen({ onNavigate }: { onNavigate: (route: Caregi
 
       <View style={[styles.dashboardGrid, isWideWeb && styles.dashboardGridWide]}>
         <View style={styles.dashboardColumn}>
+<<<<<<< HEAD
+          {alert ? <GlassSurface theme="caregiver" variant="elevated" style={styles.alertCard}>
+=======
           <GlassSurface theme="caregiver" variant="elevated" style={styles.alertCard}>
+>>>>>>> origin/new_components
             <View accessible accessibilityRole="text" accessibilityLabel={`${alert.title}. ${alert.body}`}>
               <View style={styles.alertHeading}>
                 <SoftPanel theme="caregiver" style={styles.alertIconPanel}>
@@ -73,6 +117,21 @@ export function CaregiverHomeScreen({ onNavigate }: { onNavigate: (route: Caregi
                 <Text style={styles.notedText}>Check-in planned. This note is local to the preview.</Text>
               </SoftPanel>
             ) : null}
+<<<<<<< HEAD
+            {acknowledgementError ? <SoftPanel theme="caregiver" style={styles.acknowledgementError}><Text accessibilityLiveRegion="polite" style={styles.acknowledgementErrorText}>{acknowledgementError}</Text></SoftPanel> : null}
+            <View style={styles.alertActions}>
+              <MenteButton label={alert.actionLabel} onPress={() => onNavigate('history')} theme="caregiver" variant="primary" style={styles.actionButton} />
+              <MenteButton
+                label={checkInNoted ? 'Check-in noted' : acknowledge.isPending ? 'Saving review…' : 'Mark reviewed'}
+                onPress={() => {
+                  setAcknowledgementError(null);
+                  if (mockData || !client || !livePatientId) { setCheckInNoted((current) => !current); return; }
+                  void acknowledge.mutateAsync({ patientId: livePatientId, alertId: alert.id }).then(() => setCheckInNoted(true)).catch(() => setAcknowledgementError('Mente could not save this review. The alert is still visible.'));
+                }}
+                theme="caregiver"
+                variant="secondary"
+                disabled={acknowledge.isPending}
+=======
             <View style={styles.alertActions}>
               <MenteButton label={alert.actionLabel} onPress={() => onNavigate('history')} theme="caregiver" variant="primary" style={styles.actionButton} />
               <MenteButton
@@ -80,11 +139,16 @@ export function CaregiverHomeScreen({ onNavigate }: { onNavigate: (route: Caregi
                 onPress={() => setCheckInNoted((current) => !current)}
                 theme="caregiver"
                 variant="secondary"
+>>>>>>> origin/new_components
                 style={styles.actionButton}
               />
             </View>
             <Text style={styles.createdLabel}>{alert.createdLabel} · Review with care</Text>
+<<<<<<< HEAD
+          </GlassSurface> : null}
+=======
           </GlassSurface>
+>>>>>>> origin/new_components
 
           <SectionHeader title="Today’s snapshot" theme="caregiver" />
           <GlassSurface theme="caregiver" variant="subtle" style={styles.snapshotCard}>
@@ -114,10 +178,17 @@ export function CaregiverHomeScreen({ onNavigate }: { onNavigate: (route: Caregi
           <SectionHeader title="Rosa’s family" actionLabel="Open family" onActionPress={() => onNavigate('family')} theme="caregiver" />
           <SurfaceCard theme="caregiver" style={styles.familyCard}>
             <View style={styles.familyTopRow}>
+<<<<<<< HEAD
+              {family.length ? <AvatarStack people={family.map(({ initials, name }) => ({ initials, name }))} theme="caregiver" /> : <FamilyConstellation theme="caregiver" />}
+              <Text style={styles.familyCount}>{family.length ? `${family.length} familiar people` : 'Family memories'}</Text>
+            </View>
+            <Text style={styles.familyBody}>{family.length ? 'Familiar people and memories are ready for gentle moments.' : 'Family memories will appear here when they are added.'}</Text>
+=======
               <AvatarStack people={family.map(({ initials, name }) => ({ initials, name }))} theme="caregiver" />
               <Text style={styles.familyCount}>3 familiar people</Text>
             </View>
             <Text style={styles.familyBody}>Ana, Miguel, and Sofia’s memories are available for gentle moments.</Text>
+>>>>>>> origin/new_components
           </SurfaceCard>
         </View>
       </View>
@@ -125,6 +196,34 @@ export function CaregiverHomeScreen({ onNavigate }: { onNavigate: (route: Caregi
   );
 }
 
+<<<<<<< HEAD
+function CaregiverEmptyState() {
+  return (
+    <ScreenScroll theme="caregiver">
+      <PageHeader eyebrow="Caregiver home" title="Your family view is ready" subtitle="Add a family and a person in companion setup before Mente can show an overview." theme="caregiver" />
+      <SurfaceCard theme="caregiver" style={styles.stateCard}>
+        <Text style={styles.stateTitle}>Nothing to review yet</Text>
+        <Text style={styles.stateBody}>No patient information is available for this caregiver profile. Mente will not substitute preview data.</Text>
+      </SurfaceCard>
+    </ScreenScroll>
+  );
+}
+
+function CaregiverErrorState({ error, onRetry, hasStaleData }: { error: string; onRetry: () => void; hasStaleData: boolean }) {
+  return (
+    <ScreenScroll theme="caregiver">
+      <PageHeader eyebrow="Caregiver home" title="We could not refresh the family view" subtitle={hasStaleData ? 'The last saved view may be out of date.' : 'No family information was changed.'} theme="caregiver" />
+      <SurfaceCard theme="caregiver" style={styles.stateCard}>
+        <Text style={styles.stateTitle}>Please try again</Text>
+        <Text accessibilityLiveRegion="polite" style={styles.stateBody}>{error}</Text>
+        <MenteButton label="Retry" onPress={onRetry} theme="caregiver" />
+      </SurfaceCard>
+    </ScreenScroll>
+  );
+}
+
+=======
+>>>>>>> origin/new_components
 const styles = StyleSheet.create({
   dashboardGrid: {
     gap: 0,
@@ -251,6 +350,19 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     lineHeight: 18,
   },
+<<<<<<< HEAD
+  acknowledgementError: {
+    backgroundColor: caregiverTheme.colors.alertBackground,
+    paddingVertical: spacing.sm,
+  },
+  acknowledgementErrorText: {
+    color: caregiverTheme.colors.alert,
+    fontSize: 13,
+    fontWeight: '700',
+    lineHeight: 18,
+  },
+=======
+>>>>>>> origin/new_components
   alertActions: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -316,4 +428,21 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
   },
+<<<<<<< HEAD
+  stateCard: {
+    gap: spacing.sm,
+    marginTop: spacing.lg,
+  },
+  stateTitle: {
+    color: caregiverTheme.colors.text,
+    fontSize: 18,
+    fontWeight: '800',
+  },
+  stateBody: {
+    color: caregiverTheme.colors.textMuted,
+    fontSize: 15,
+    lineHeight: 22,
+  },
+=======
+>>>>>>> origin/new_components
 });

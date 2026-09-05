@@ -1,0 +1,39 @@
+{
+  "id": "FRONTMAP-001",
+  "claim_key": "integration.map-frontend-data-boundary",
+  "title": "Map current screens to typed feature view models",
+  "type": "TASK",
+  "owner": "FRONTEND",
+  "model_class": "STANDARD",
+  "priority": "HIGH",
+  "status": "BLOCKED",
+  "objective": "Inspect the current mock-driven Expo screens and define the smallest screen-to-feature-hook/view-model migration that preserves routing, glass, accessibility, and role separation.",
+  "dependencies": ["BASE-001"],
+  "execution_mode": "READ_ONLY",
+  "allowed_scope": ["analysis handoff only"],
+  "read_only_scope": ["App.tsx", "src/**", "package.json", "app.json", "prd.md", "architecture.md", "integration-data-flow.md"],
+  "forbidden_scope": ["source edits", "dependencies", "backend/**", "credentials", "deployment", "commits", "pushes"],
+  "acceptance_criteria": [
+    "Every screen using mock data is mapped to a hook or local-only state",
+    "Caregiver and patient data/auth boundaries stay separate",
+    "Existing navigation and glass abstractions remain intact",
+    "Proposed migration identifies loading, empty, stale, offline, retry, and failed-write states"
+  ],
+  "required_tests": ["Read-only source inspection"],
+  "workspace": "/home/rosso/Projects/Mente",
+  "branch": "main",
+  "result": {
+    "summary": "No repository changes. The assigned read-only worker reached the environment usage limit before completing; the Supervisor will perform this bounded analysis sequentially."
+  },
+  "review_status": "NOT_STARTED",
+  "qa_status": "NOT_REQUIRED",
+  "blockers": [
+    {
+      "task": "FRONTMAP-001",
+      "blocker": "The assigned read-only subagent reached the environment usage limit.",
+      "blocking_task_or_dependency": null,
+      "owner": "FRONTEND",
+      "action_required": "Resume local sequential analysis; do not retry the blocked subagent before its usage window resets."
+    }
+  ]
+}

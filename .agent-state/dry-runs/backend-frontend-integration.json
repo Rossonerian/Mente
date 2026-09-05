@@ -1,0 +1,84 @@
+{
+  "scenario": "Backend already exists and frontend services already exist. Verify both, integrate them correctly, test the complete flow, fix defects, and deliver a working system.",
+  "run_type": "NON_MUTATING_DRY_RUN",
+  "status": "BLOCKED_AS_EXPECTED",
+  "task_graph": [
+    {
+      "id": "DRY-BE-001",
+      "role": "QA",
+      "model_class": "TINY",
+      "status": "BLOCKED",
+      "dependencies": [],
+      "scope": ["backend/**"],
+      "objective": "Run backend tests and static checks with local fixtures.",
+      "result": "python3 -m pytest failed because pytest is unavailable; ruff, mypy, bandit, and pip-audit are also unavailable. No packages were installed."
+    },
+    {
+      "id": "DRY-FE-001",
+      "role": "QA",
+      "model_class": "TINY",
+      "status": "FAILED",
+      "dependencies": [],
+      "scope": ["src/**", "package.json", "package-lock.json"],
+      "objective": "Verify frontend services and frontend quality commands.",
+      "result": "No frontend API/service layer exists, and committed conflict markers make package metadata invalid."
+    },
+    {
+      "id": "DRY-ARC-001",
+      "role": "ARCHITECT",
+      "model_class": "STANDARD",
+      "status": "BLOCKED",
+      "dependencies": [],
+      "scope": ["backend/app/schemas.py", "backend/app/routers/**", "src/**", "integration-data-flow.md"],
+      "objective": "Compare backend contracts with frontend models and documented data ownership.",
+      "result": "Backend contracts exist, but frontend adapters/services are absent; auth authority, game boundary, overview freshness, token lifecycle, CORS, and response mapping require decisions."
+    },
+    {
+      "id": "DRY-BUG-001",
+      "role": "BUG-FIXER",
+      "model_class": "COMPLEX",
+      "status": "BLOCKED",
+      "dependencies": ["DRY-FE-001"],
+      "scope": ["package.json", "package-lock.json", "src/components/BottomTabBar.tsx"],
+      "objective": "Resolve conflict markers only after an authorized application-repair task."
+    },
+    {
+      "id": "DRY-INT-001",
+      "role": "INTEGRATION",
+      "model_class": "COMPLEX",
+      "status": "BLOCKED",
+      "dependencies": ["DRY-BE-001", "DRY-FE-001", "DRY-ARC-001"],
+      "scope": ["frontend service boundary", "backend API contract"],
+      "objective": "Integrate only after all verification dependencies are approved."
+    },
+    {
+      "id": "DRY-QA-001",
+      "role": "QA",
+      "model_class": "STANDARD",
+      "status": "PLANNED",
+      "dependencies": ["DRY-INT-001"],
+      "scope": ["local integration and E2E verification"],
+      "objective": "Run integration, E2E, and regression checks after integration."
+    },
+    {
+      "id": "DRY-REV-001",
+      "role": "REVIEWER",
+      "model_class": "COMPLEX",
+      "status": "PLANNED",
+      "dependencies": ["DRY-QA-001"],
+      "scope": ["consolidated diff and evidence"],
+      "objective": "Review correctness, security, scope, and test quality."
+    },
+    {
+      "id": "DRY-MILESTONE",
+      "role": "BOSS",
+      "model_class": "CRITICAL",
+      "status": "BLOCKED",
+      "dependencies": ["DRY-REV-001"],
+      "objective": "Accept or reject only after Supervisor validation and evidence packaging."
+    }
+  ],
+  "parallel_wave": ["DRY-BE-001", "DRY-FE-001", "DRY-ARC-001"],
+  "next_allowed_task": "Authorize BASE-001 and a backend dev environment, then freeze the cross-system contract; integration remains forbidden.",
+  "boss_decision": "BLOCKED"
+}

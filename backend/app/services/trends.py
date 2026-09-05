@@ -1,6 +1,10 @@
 from collections import defaultdict
 from datetime import date, datetime, time, timedelta, timezone
 from statistics import mean, pstdev
+<<<<<<< HEAD
+from typing import Literal
+=======
+>>>>>>> origin/new_components
 from zoneinfo import ZoneInfo
 
 from sqlalchemy import select
@@ -124,6 +128,10 @@ def build_patient_trend(db: Session, patient: Patient, now: datetime | None = No
     latency_z = mean(latency_values)
     score = mean(combined_values)
 
+<<<<<<< HEAD
+    trend_status: Literal["stable", "watch", "declining"]
+=======
+>>>>>>> origin/new_components
     if score >= 2.0 and accuracy_z > 0 and latency_z > 0:
         trend_status, label = "declining", "Needs attention"
         reason = "Recent comparable sessions were both less accurate and slower than the earlier observed pattern."

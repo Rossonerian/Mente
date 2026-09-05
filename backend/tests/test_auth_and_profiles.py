@@ -2,11 +2,22 @@ from datetime import datetime, timezone
 
 from fastapi.testclient import TestClient
 
+<<<<<<< HEAD
+from app.security import VerifiedSupabaseClaims
+from tests.conftest import StubSupabaseVerifier
+
+
+def test_profile_and_family_access(client: TestClient, caregiver_setup: dict) -> None:
+    profile = client.get("/v1/auth/me", headers=caregiver_setup["headers"])
+    assert profile.status_code == 200
+    assert profile.json()["display_name"] == "Ana"
+=======
 
 def test_registration_login_and_family_access(client: TestClient, caregiver_setup: dict) -> None:
     login = client.post("/v1/auth/login", json={"email": "ANA@example.com", "password": "safe-password"})
     assert login.status_code == 200
     assert login.json()["user"]["display_name"] == "Ana"
+>>>>>>> origin/new_components
 
     patient = client.get(
         f"/v1/patients/{caregiver_setup['patient_id']}",
@@ -15,11 +26,28 @@ def test_registration_login_and_family_access(client: TestClient, caregiver_setu
     assert patient.status_code == 200
     assert patient.json()["preferred_name"] == "Rosa"
 
+<<<<<<< HEAD
+    client.app.state.caregiver_token_verifier = StubSupabaseVerifier(
+        VerifiedSupabaseClaims(
+            subject="ef71a0da-2a30-4b67-b5ea-b95b219ea20a",
+            email="outsider@example.com",
+            role="authenticated",
+        )
+    )
+    second_auth = client.post(
+        "/v1/auth/profile",
+        headers={"Authorization": "Bearer supabase-access-token"},
+        json={"display_name": "Outsider"},
+    )
+    assert second_auth.status_code == 201
+    outsider_headers = {"Authorization": "Bearer supabase-access-token"}
+=======
     second_auth = client.post(
         "/v1/auth/register",
         json={"email": "outsider@example.com", "password": "safe-password", "display_name": "Outsider"},
     )
     outsider_headers = {"Authorization": f"Bearer {second_auth.json()['access_token']}"}
+>>>>>>> origin/new_components
     hidden = client.get(f"/v1/patients/{caregiver_setup['patient_id']}", headers=outsider_headers)
     assert hidden.status_code == 404
 

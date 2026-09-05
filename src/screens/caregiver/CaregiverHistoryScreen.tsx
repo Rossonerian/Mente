@@ -9,8 +9,17 @@ import { ScreenScroll } from '../../components/Screen';
 import { SectionHeader } from '../../components/SectionHeader';
 import { StatusPill } from '../../components/StatusPill';
 import { caregiverTheme, spacing } from '../../theme/tokens';
+<<<<<<< HEAD
+import type { CognitiveSession, SessionSource, TrendAssessment } from '../../types';
+import { useCaregiverPatientContext } from '../../features/caregiver/useCaregiverContext';
+import { useQuery } from '@tanstack/react-query';
+import { adaptCaregiverSession, adaptCaregiverOverview } from '../../api/adapters/caregiverOverview';
+import { isDevelopmentMockMode } from '../../api/config';
+import { menteMockData } from '../../data/mockData';
+=======
 import { menteMockData } from '../../data/mockData';
 import type { SessionSource } from '../../types';
+>>>>>>> origin/new_components
 
 type HistoryFilter = 'all' | SessionSource;
 
@@ -20,10 +29,35 @@ const filters: readonly { value: HistoryFilter; label: string }[] = [
   { value: 'GAME', label: 'Play' },
 ];
 
+<<<<<<< HEAD
+export function CaregiverHistoryScreen({ accessToken, caregiverId }: { accessToken: string | null; caregiverId: string | null }) {
+  const [filter, setFilter] = useState<HistoryFilter>('all');
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const context = useCaregiverPatientContext(accessToken, caregiverId);
+  if (isDevelopmentMockMode) return <HistoryContent sessions={menteMockData.sessions.filter((session) => filter === 'all' || session.source === filter)} trend={menteMockData.trend} filter={filter} setFilter={setFilter} expandedId={expandedId} setExpandedId={setExpandedId} />;
+  if (context.kind === 'loading') return <HistoryState title="Loading activity" body="Loading saved family activity…" />;
+  if (context.kind === 'empty') return <HistoryState title="No activity yet" body="Add a family and a person before reviewing activity." actionLabel="Try again" onAction={context.retry} />;
+  if (context.kind === 'error') return <HistoryState title="Activity is unavailable" body={context.error.message} actionLabel="Retry" onAction={context.retry} />;
+  return <ConnectedHistory caregiverId={caregiverId!} context={context.data} />;
+}
+
+function ConnectedHistory({ caregiverId, context }: { caregiverId: string; context: { patient: { id: string }; client: { listSessions: (patientId: string, source?: 'CALL' | 'GAME', signal?: AbortSignal) => Promise<import('../../api/contracts/caregiver').SessionDto[]>; getOverview: (patientId: string, signal?: AbortSignal) => Promise<import('../../api/contracts/caregiver').PatientOverviewDto> } } }) {
+  const [filter, setFilter] = useState<HistoryFilter>('all');
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const sessionsQuery = useQuery({ queryKey: ['caregiver', caregiverId, 'patient', context.patient.id, 'sessions', filter], queryFn: ({ signal }) => context.client.listSessions(context.patient.id, filter === 'all' ? undefined : filter, signal), staleTime: 60_000 });
+  const overviewQuery = useQuery({ queryKey: ['caregiver', caregiverId, 'patient', context.patient.id, 'overview'], queryFn: ({ signal }) => context.client.getOverview(context.patient.id, signal), staleTime: 60_000 });
+  if (sessionsQuery.isPending || overviewQuery.isPending) return <HistoryState title="Loading activity" body="Loading saved family activity…" />;
+  if (sessionsQuery.error instanceof Error || overviewQuery.error instanceof Error) return <HistoryState title="Activity is unavailable" body="Mente could not load activity right now." actionLabel="Retry" onAction={() => { void sessionsQuery.refetch(); void overviewQuery.refetch(); }} />;
+  return <HistoryContent sessions={(sessionsQuery.data ?? []).map(adaptCaregiverSession)} trend={adaptCaregiverOverview(overviewQuery.data!, new Date(overviewQuery.dataUpdatedAt)).trend} filter={filter} setFilter={setFilter} expandedId={expandedId} setExpandedId={setExpandedId} />;
+}
+
+function HistoryContent({ sessions, trend, filter, setFilter, expandedId, setExpandedId }: { sessions: CognitiveSession[]; trend: TrendAssessment; filter: HistoryFilter; setFilter: (filter: HistoryFilter) => void; expandedId: string | null; setExpandedId: (id: string | null) => void }) {
+=======
 export function CaregiverHistoryScreen() {
   const [filter, setFilter] = useState<HistoryFilter>('all');
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const sessions = menteMockData.sessions.filter((session) => filter === 'all' || session.source === filter);
+>>>>>>> origin/new_components
 
   return (
     <ScreenScroll theme="caregiver">
@@ -117,18 +151,34 @@ export function CaregiverHistoryScreen() {
       <SurfaceCard theme="caregiver" style={styles.trendCard}>
         <View style={styles.trendTopRow}>
           <Text style={styles.trendTitle}>Observed pattern</Text>
+<<<<<<< HEAD
+          <StatusPill status={trend.status} label={trend.label} />
+        </View>
+        <Text style={styles.trendBody}>{trend.reason}</Text>
+        <View style={styles.trendFootnote}>
+          <Text style={styles.trendFootnoteText}>{trend.windowLabel}</Text>
+          <Text style={styles.trendFootnoteText}>{trend.sufficiency}</Text>
+=======
           <StatusPill status={menteMockData.trend.status} label={menteMockData.trend.label} />
         </View>
         <Text style={styles.trendBody}>{menteMockData.trend.reason}</Text>
         <View style={styles.trendFootnote}>
           <Text style={styles.trendFootnoteText}>{menteMockData.trend.windowLabel}</Text>
           <Text style={styles.trendFootnoteText}>{menteMockData.trend.sufficiency}</Text>
+>>>>>>> origin/new_components
         </View>
       </SurfaceCard>
     </ScreenScroll>
   );
 }
 
+<<<<<<< HEAD
+function HistoryState({ title, body, actionLabel, onAction }: { title: string; body: string; actionLabel?: string; onAction?: () => void }) {
+  return <ScreenScroll theme="caregiver"><PageHeader eyebrow="Patient history" title={title} subtitle={body} theme="caregiver" /><SurfaceCard theme="caregiver" style={styles.emptyCard}><Text style={styles.emptyTitle}>{title}</Text><Text style={styles.emptyBody}>{body}</Text>{actionLabel && onAction ? <FocusablePressable accessibilityRole="button" accessibilityLabel={actionLabel} onPress={onAction} style={styles.filter}><Text style={styles.filterLabel}>{actionLabel}</Text></FocusablePressable> : null}</SurfaceCard></ScreenScroll>;
+}
+
+=======
+>>>>>>> origin/new_components
 const styles = StyleSheet.create({
   contextCard: {
     alignItems: 'flex-start',
