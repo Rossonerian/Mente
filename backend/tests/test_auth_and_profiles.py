@@ -83,3 +83,23 @@ def test_memory_and_settings_are_available_to_call_bot(client: TestClient, careg
 
     denied = client.get(f"/v1/integrations/call-bot/patients/{patient_id}/context")
     assert denied.status_code == 401
+
+
+def test_auth_profile_rate_limiting(client: TestClient) -> None:
+    client.app.state.caregiver_token_verifier = StubSupabaseVerifier(
+        VerifiedSupabaseClaims(
+            subject="a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+            email="ratelimit@example.com",
+            role="authenticated",
+        )
+    )
+    headers = {"Authorization": "Bearer supabase-access-token"}
+    limit = client.app.state.settings.auth_attempts_per_minute
+
+    for _ in range(limit):
+        res = client.post("/v1/auth/profile", headers=headers, json={"display_name": "Test User"})
+        assert res.status_code in (201, 409)
+
+    blocked = client.post("/v1/auth/profile", headers=headers, json={"display_name": "Test User"})
+    assert blocked.status_code == 429
+    assert "Too many attempts" in blocked.json()["detail"]

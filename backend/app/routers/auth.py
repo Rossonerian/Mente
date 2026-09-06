@@ -1,15 +1,22 @@
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, Request, status
 from sqlalchemy.exc import IntegrityError
 
 from ..dependencies import CurrentUser, DbSession, VerifiedCaregiver
 from ..models import User
+from ..rate_limit import enforce_rate_limit
 from ..schemas import CaregiverProfileCreate, UserRead
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
 
 
 @router.post("/profile", response_model=UserRead, status_code=status.HTTP_201_CREATED)
-def create_profile(payload: CaregiverProfileCreate, claims: VerifiedCaregiver, db: DbSession) -> User:
+def create_profile(
+    payload: CaregiverProfileCreate,
+    claims: VerifiedCaregiver,
+    db: DbSession,
+    request: Request,
+) -> User:
+    enforce_rate_limit(request, "auth-profile", request.app.state.settings.auth_attempts_per_minute)
     existing_profile = db.query(User).filter(User.auth_user_id == claims.subject).one_or_none()
     if existing_profile is not None:
         return existing_profile
