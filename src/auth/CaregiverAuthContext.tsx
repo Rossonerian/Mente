@@ -3,6 +3,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { createContext, type ReactNode, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { isDevelopmentMockMode } from '../api/config';
 import { getSupabaseClient } from './supabase';
+import { getSafeCaregiverSignInMessage } from './caregiverAuthError';
 
 type CaregiverAuthState =
   | { kind: 'loading' }
@@ -35,6 +36,7 @@ export function CaregiverAuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const caregiverId = state.kind === 'signed-in' ? state.user.id : null;
     if (previousCaregiverId.current !== caregiverId) {
+      void queryClient.cancelQueries({ queryKey: ['caregiver'] });
       queryClient.removeQueries({ queryKey: ['caregiver'] });
       previousCaregiverId.current = caregiverId;
     }
@@ -62,7 +64,7 @@ export function CaregiverAuthProvider({ children }: { children: ReactNode }) {
     async signIn(email, password) {
       if (!client) return 'Caregiver sign-in is not configured on this build.';
       const { error } = await client.auth.signInWithPassword({ email: email.trim(), password });
-      return error?.message ?? null;
+      return error ? getSafeCaregiverSignInMessage(error.message) : null;
     },
     async signOut() {
       queryClient.removeQueries({ queryKey: ['caregiver'] });

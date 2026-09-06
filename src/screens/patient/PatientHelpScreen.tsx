@@ -22,14 +22,14 @@ export function PatientHelpScreen({ onNavigate }: { onNavigate: (route: PatientR
           <MenteIcon name="hand-left-outline" size={26} color={patientTheme.colors.primary} />
         </View>
         <Text style={styles.controlTitle}>Every moment has a stop</Text>
-        <Text style={styles.controlBody}>During an activity, use Repeat to hear something again, Skip to move on, or Stop to finish for now.</Text>
+        <Text style={styles.controlBody}>During an activity, use Show again to revisit a prompt, Skip to move on, or Stop to finish for now.</Text>
         <MenteButton label="Finish for now" onPress={() => onNavigate('complete')} theme="patient" variant="secondary" iconName="stop-circle-outline" />
       </SurfaceCard>
 
       <SurfaceCard theme="patient" style={styles.howCard}>
         <Text style={styles.howTitle}>How a moment works</Text>
-        <HelpRow icon="volume-medium-outline" title="Listen" body="A familiar voice or memory is shared one at a time." />
-        <HelpRow icon="refresh-outline" title="Repeat" body="Hear the moment again whenever you want." />
+        <HelpRow icon="eye-outline" title="Look over" body="A familiar person or memory is shown one at a time." />
+        <HelpRow icon="refresh-outline" title="Show again" body="See the moment again whenever you want." />
         <HelpRow icon="arrow-forward-outline" title="Skip" body="Move to another moment without needing to explain." />
       </SurfaceCard>
 

@@ -6,7 +6,8 @@ import { ScreenScroll } from '../../components/Screen';
 import { patientTheme, spacing } from '../../theme/tokens';
 import { GlassSurface } from '../../components/glass/GlassSurface';
 
-export function PatientCompleteScreen({ onReturnToPlay, onFamily }: { onReturnToPlay: () => void; onFamily: () => void }) {
+export function PatientCompleteScreen({ onReturnToPlay, onFamily, familyNames = [] }: { onReturnToPlay: () => void; onFamily: () => void; familyNames?: string[] }) {
+  const familyNote = familyNames.length ? `${formatNames(familyNames)} are close by in your family memories.` : 'Your family memories are close by whenever you want to return.';
   return (
     <ScreenScroll theme="patient" contentStyle={styles.body}>
       <View style={styles.brandRow}>
@@ -24,7 +25,7 @@ export function PatientCompleteScreen({ onReturnToPlay, onFamily }: { onReturnTo
           <Text style={styles.cardBody}>There is nothing to finish and nothing to remember perfectly. A little time together is enough.</Text>
           <SoftPanel theme="patient" style={styles.familyNote}>
             <MenteIcon name="people-outline" size={21} color={patientTheme.colors.primary} />
-            <Text style={styles.familyNoteText}>Ana, Miguel, and Sofia are close by in your family memories.</Text>
+            <Text style={styles.familyNoteText}>{familyNote}</Text>
           </SoftPanel>
         </GlassSurface>
         <View style={styles.actions}>
@@ -34,6 +35,12 @@ export function PatientCompleteScreen({ onReturnToPlay, onFamily }: { onReturnTo
       </View>
     </ScreenScroll>
   );
+}
+
+function formatNames(names: string[]): string {
+  if (names.length === 1) return names[0]!;
+  if (names.length === 2) return `${names[0]} and ${names[1]}`;
+  return `${names.slice(0, -1).join(', ')}, and ${names[names.length - 1]}`;
 }
 
 const styles = StyleSheet.create({

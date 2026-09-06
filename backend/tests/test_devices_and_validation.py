@@ -40,6 +40,50 @@ def test_join_codes_are_single_use_and_devices_can_be_revoked(client: TestClient
     assert client.get("/v1/patient/me", headers=patient_headers).status_code == 401
 
 
+def test_development_admin_code_is_repeatable_but_keeps_one_active_test_device(
+    client: TestClient,
+    caregiver_setup: dict,
+) -> None:
+    patient_id = caregiver_setup["patient_id"]
+    client.app.state.settings.development_admin_code = "482916"
+    client.app.state.settings.development_patient_id = patient_id
+
+    code_response = client.get(
+        f"/v1/patients/{patient_id}/development-access-code",
+        headers=caregiver_setup["headers"],
+    )
+    assert code_response.status_code == 200, code_response.text
+    assert code_response.json() == {"enabled": True, "patient_id": patient_id, "code": "482916"}
+
+    first = client.post("/v1/patient/bind", json={"code": "482916"})
+    assert first.status_code == 200, first.text
+    first_token = first.json()["patient_token"]
+
+    second = client.post("/v1/patient/bind", json={"code": "482916"})
+    assert second.status_code == 200, second.text
+    second_token = second.json()["patient_token"]
+    assert second_token != first_token
+
+    assert client.get("/v1/patient/me", headers={"X-Patient-Token": first_token}).status_code == 401
+    assert client.get("/v1/patient/me", headers={"X-Patient-Token": second_token}).status_code == 200
+
+    devices = client.get(f"/v1/patients/{patient_id}/devices", headers=caregiver_setup["headers"])
+    assert devices.status_code == 200
+    assert sum(device["revoked_at"] is None for device in devices.json()) == 1
+
+
+def test_development_admin_code_is_rejected_by_production_configuration() -> None:
+    with pytest.raises(ValidationError, match="development admin code"):
+        Settings(
+            environment="production",
+            supabase_url="https://mente-test.supabase.co",
+            call_bot_api_key="production-callbot-key-with-at-least-32-characters",
+            cors_origins="https://app.example.com",
+            development_admin_code="482916",
+            development_patient_id="patient-1",
+        )
+
+
 def test_input_boundaries_reject_unsafe_or_ambiguous_values(
     client: TestClient,
     caregiver_setup: dict,
@@ -131,22 +175,32 @@ def test_production_configuration_rejects_development_defaults() -> None:
     with pytest.raises(ValidationError):
         Settings(
             environment="production",
-<<<<<<< HEAD
             supabase_url="https://mente-test.supabase.co",
-=======
-            jwt_secret="replace-with-at-least-32-random-characters",
->>>>>>> origin/new_components
             call_bot_api_key="replace-with-a-different-long-random-key",
+        )
+
+    with pytest.raises(ValidationError):
+        Settings(
+            environment="production",
+            supabase_url="https://mente-test.supabase.co",
+            call_bot_api_key="production-callbot-key-with-at-least-32-characters",
         )
 
     production = Settings(
         environment="production",
-<<<<<<< HEAD
+        database_url="postgresql+psycopg://user:password@localhost/mente",
         supabase_url="https://mente-test.supabase.co",
-=======
-        jwt_secret="production-jwt-secret-with-at-least-32-characters",
->>>>>>> origin/new_components
         call_bot_api_key="production-callbot-key-with-at-least-32-characters",
+        cors_origins="https://app.example.com",
     )
     assert production.auto_create_tables is False
     assert production.environment == "production"
+
+    with pytest.raises(ValidationError, match="PostgreSQL"):
+        Settings(
+            environment="production",
+            database_url="sqlite:///./mente.db",
+            supabase_url="https://mente-test.supabase.co",
+            call_bot_api_key="production-callbot-key-with-at-least-32-characters",
+            cors_origins="https://app.example.com",
+        )

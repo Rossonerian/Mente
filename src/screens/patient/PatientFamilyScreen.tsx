@@ -8,7 +8,6 @@ import { ScreenScroll } from '../../components/Screen';
 import { menteMockData } from '../../data/mockData';
 import { patientTheme, spacing } from '../../theme/tokens';
 import { GlassSurface } from '../../components/glass/GlassSurface';
-<<<<<<< HEAD
 import { adaptMemoryToFamilyMember } from '../../api/adapters/caregiverFamily';
 import { isDevelopmentMockMode } from '../../api/config';
 import { usePatientMemoryQuery } from '../../features/patient/usePatientSession';
@@ -30,12 +29,6 @@ function ConnectedPatientFamily({ patientToken }: { patientToken: string | null 
 
 function PatientFamilyContent({ family }: { family: FamilyMember[] }) {
   const [playedName, setPlayedName] = useState<string | null>(null);
-=======
-
-export function PatientFamilyScreen() {
-  const [playedName, setPlayedName] = useState<string | null>(null);
-  const { family } = menteMockData;
->>>>>>> origin/new_components
   const selectedMember = playedName ? family.find((member) => member.name.startsWith(playedName)) : undefined;
 
   return (
@@ -49,7 +42,7 @@ export function PatientFamilyScreen() {
 
       <GlassSurface theme="patient" variant="focus" style={styles.introCard}>
         <Text style={styles.introTitle}>Your family is close</Text>
-        <Text style={styles.introBody}>Choose a voice or memory to sit with for a little while. There is nothing to get right.</Text>
+        <Text style={styles.introBody}>Choose a familiar person or memory to sit with for a little while. There is nothing to get right.</Text>
       </GlassSurface>
 
       <SurfaceCard theme="patient" style={styles.membersCard}>
@@ -64,31 +57,24 @@ export function PatientFamilyScreen() {
       {playedName ? (
         <SoftPanel theme="patient" style={styles.playedPanel}>
           <Text style={styles.playedTitle}>A hello from {playedName}</Text>
-<<<<<<< HEAD
           <Text style={styles.playedBody}>Take a quiet moment with this familiar memory. There is nothing to get right.</Text>
-=======
-          <Text style={styles.playedBody}>This voice moment is represented locally in the preview.</Text>
->>>>>>> origin/new_components
         </SoftPanel>
       ) : null}
       <MenteButton
-        label={selectedMember ? `Play ${selectedMember.name.split(' ')[0]}’s hello again` : 'Play a familiar hello'}
+        label={selectedMember ? `Show ${selectedMember.name.split(' ')[0]}’s memory again` : 'Show a familiar memory'}
         onPress={() => setPlayedName(selectedMember?.name.split(' ')[0] ?? family[0].name.split(' ')[0])}
         theme="patient"
         variant="secondary"
-        iconName="volume-medium-outline"
+        iconName="refresh-outline"
         style={styles.fullButton}
       />
-      <Text style={styles.note}>Voice moments are gentle prompts, not a test.</Text>
+      <Text style={styles.note}>Memory moments are gentle prompts, not a test.</Text>
     </ScreenScroll>
   );
 }
 
-<<<<<<< HEAD
 function FamilyState({ title, body, actionLabel, onAction }: { title: string; body: string; actionLabel?: string; onAction?: () => void }) { return <ScreenScroll theme="patient"><PageHeader eyebrow="Familiar people" title={title} subtitle={body} theme="patient" /><SurfaceCard theme="patient" style={styles.membersCard}><Text style={styles.introTitle}>{title}</Text><Text style={styles.introBody}>{body}</Text>{actionLabel && onAction ? <MenteButton label={actionLabel} onPress={onAction} theme="patient" /> : null}</SurfaceCard></ScreenScroll>; }
 
-=======
->>>>>>> origin/new_components
 const styles = StyleSheet.create({
   introCard: {
     gap: spacing.xs,

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { AvatarStack } from '../../components/Avatar';
 import { MenteButton } from '../../components/Button';
+import { MenteIcon } from '../../components/Icon';
 import { SurfaceCard, Hairline, SoftPanel } from '../../components/Card';
 import { MemberCard } from '../../components/MemberCard';
 import { PageHeader } from '../../components/PageHeader';
@@ -10,12 +11,13 @@ import { SectionHeader } from '../../components/SectionHeader';
 import { caregiverTheme, spacing } from '../../theme/tokens';
 import { menteMockData } from '../../data/mockData';
 import { GlassSurface } from '../../components/glass/GlassSurface';
-<<<<<<< HEAD
 import { useCaregiverPatientContext } from '../../features/caregiver/useCaregiverContext';
 import { useQuery } from '@tanstack/react-query';
 import { adaptMemoryToFamilyMember } from '../../api/adapters/caregiverFamily';
 import { isDevelopmentMockMode } from '../../api/config';
 import type { FamilyMember } from '../../types';
+import type { CaregiverClient } from '../../api/caregiverClient';
+import type { DevelopmentAccessCodeDto } from '../../api/contracts/caregiver';
 
 export function CaregiverFamilyScreen({ onOpenSetup, accessToken, caregiverId }: { onOpenSetup: () => void; accessToken: string | null; caregiverId: string | null }) {
   if (isDevelopmentMockMode) return <FamilyContent onOpenSetup={onOpenSetup} family={menteMockData.family} patientName={menteMockData.patient.preferredName} live={false} />;
@@ -30,27 +32,26 @@ function ConnectedFamily({ onOpenSetup, accessToken, caregiverId }: { onOpenSetu
   return <ConnectedFamilyContent onOpenSetup={onOpenSetup} caregiverId={caregiverId!} context={context.data} />;
 }
 
-function ConnectedFamilyContent({ onOpenSetup, caregiverId, context }: { onOpenSetup: () => void; caregiverId: string; context: { patient: { id: string; preferred_name: string }; client: { listMemories: (patientId: string, signal?: AbortSignal) => Promise<import('../../api/contracts/patient').MemoryDto[]> } } }) {
+function ConnectedFamilyContent({ onOpenSetup, caregiverId, context }: { onOpenSetup: () => void; caregiverId: string; context: { patient: { id: string; preferred_name: string }; client: CaregiverClient } }) {
   const memories = useQuery({ queryKey: ['caregiver', caregiverId, 'patient', context.patient.id, 'memories'], queryFn: ({ signal }) => context.client.listMemories(context.patient.id, signal), staleTime: 60_000 });
+  const developmentAccess = useQuery({
+    queryKey: ['caregiver', caregiverId, 'patient', context.patient.id, 'development-access-code'],
+    queryFn: ({ signal }) => context.client.getDevelopmentAccessCode(context.patient.id, signal),
+    staleTime: 60_000,
+  });
   if (memories.isPending) return <FamilyState title="Loading family" body="Loading saved family memories…" />;
   if (memories.error instanceof Error) return <FamilyState title="Family is unavailable" body="Mente could not load family memories right now." actionLabel="Retry" onAction={() => void memories.refetch()} />;
-  return <FamilyContent onOpenSetup={onOpenSetup} family={(memories.data ?? []).map(adaptMemoryToFamilyMember)} patientName={context.patient.preferred_name} live />;
+  return <FamilyContent onOpenSetup={onOpenSetup} family={(memories.data ?? []).map(adaptMemoryToFamilyMember)} patientName={context.patient.preferred_name} live developmentAccess={developmentAccess.data?.enabled ? developmentAccess.data : null} />;
 }
 
-function FamilyContent({ onOpenSetup, family, patientName, live }: { onOpenSetup: () => void; family: FamilyMember[]; patientName: string; live: boolean }) {
+function FamilyContent({ onOpenSetup, family, patientName, live, developmentAccess }: { onOpenSetup: () => void; family: FamilyMember[]; patientName: string; live: boolean; developmentAccess?: DevelopmentAccessCodeDto | null }) {
   const [editPreview, setEditPreview] = useState(false);
-=======
-
-export function CaregiverFamilyScreen({ onOpenSetup }: { onOpenSetup: () => void }) {
-  const [editPreview, setEditPreview] = useState(false);
-  const { family, patient } = menteMockData;
->>>>>>> origin/new_components
   const voiceCount = family.filter((member) => member.voiceAvailable).length;
 
   return (
     <ScreenScroll theme="caregiver">
       <PageHeader
-        eyebrow="Rosa’s circle"
+        eyebrow={`${patientName}’s circle`}
         title="Family"
         subtitle="Keep the people, voices, and memories that make each moment feel familiar."
         theme="caregiver"
@@ -60,23 +61,31 @@ export function CaregiverFamilyScreen({ onOpenSetup }: { onOpenSetup: () => void
         <View style={styles.overviewTopRow}>
           <View style={styles.overviewCopy}>
             <Text style={styles.overviewEyebrow}>Familiar circle</Text>
-<<<<<<< HEAD
             <Text style={styles.overviewTitle}>{patientName}’s people</Text>
             <Text style={styles.overviewBody}>{live ? 'These familiar details are saved for gentle family moments.' : 'These details are shown as local preview data for the family view.'}</Text>
-=======
-            <Text style={styles.overviewTitle}>{patient.preferredName}’s people</Text>
-            <Text style={styles.overviewBody}>These details are shown as local preview data for the family view.</Text>
->>>>>>> origin/new_components
           </View>
           <AvatarStack people={family.map(({ initials, name }) => ({ initials, name }))} theme="caregiver" />
         </View>
         <View style={styles.coverageRow}>
           <View style={styles.coverageDot} />
-          <Text style={styles.coverageText}>{voiceCount} family voices available for gentle prompts</Text>
+          <Text style={styles.coverageText}>{voiceCount} voice memories marked for gentle prompts</Text>
         </View>
       </GlassSurface>
 
-      <SectionHeader title="People Rosa recognizes" theme="caregiver" />
+      {developmentAccess?.code ? (
+        <GlassSurface theme="caregiver" variant="subtle" style={styles.developmentCodeCard}>
+          <View style={styles.developmentCodeHeading}>
+            <MenteIcon name="flask-outline" size={20} color={caregiverTheme.colors.primary} />
+            <View style={styles.developmentCodeCopy}>
+              <Text style={styles.developmentCodeTitle}>Local patient connection</Text>
+              <Text style={styles.developmentCodeBody}>For development and test builds only. Enter this six-digit code on the patient device.</Text>
+            </View>
+          </View>
+          <Text selectable accessibilityLabel={`Development connection code ${developmentAccess.code}`} style={styles.developmentCode}>{developmentAccess.code}</Text>
+        </GlassSurface>
+      ) : null}
+
+      <SectionHeader title={`People ${patientName} recognizes`} theme="caregiver" />
       <SurfaceCard theme="caregiver" style={styles.membersCard}>
         {family.map((member, index) => (
           <View key={member.id}>
@@ -99,28 +108,19 @@ export function CaregiverFamilyScreen({ onOpenSetup }: { onOpenSetup: () => void
           <Text style={styles.coverageMetricValue}>{voiceCount}</Text>
           <View style={styles.coverageMetricCopy}>
             <Text style={styles.coverageMetricTitle}>Voice moments</Text>
-            <Text style={styles.coverageMetricBody}>Available in the preview without opening a recording flow.</Text>
+            <Text style={styles.coverageMetricBody}>Marked in the saved memory set; playback is not available in this build.</Text>
           </View>
         </View>
       </SurfaceCard>
 
       {editPreview ? (
         <SoftPanel theme="caregiver" style={styles.editNotice}>
-<<<<<<< HEAD
             <Text style={styles.editNoticeTitle}>{live ? 'Family memory management' : 'Preview-only controls'}</Text>
             <Text style={styles.editNoticeBody}>{live ? 'This view reflects saved, consented memories. Add or revise details through the caregiver management flow.' : 'A connected family editor belongs to the future management surface. Nothing is saved from this preview.'}</Text>
         </SoftPanel>
       ) : null}
       <MenteButton
         label={editPreview ? 'Hide family note' : live ? 'About saved memories' : 'Preview edit controls'}
-=======
-          <Text style={styles.editNoticeTitle}>Preview-only controls</Text>
-          <Text style={styles.editNoticeBody}>A connected family editor belongs to the future management surface. Nothing is saved from this preview.</Text>
-        </SoftPanel>
-      ) : null}
-      <MenteButton
-        label={editPreview ? 'Hide edit note' : 'Preview edit controls'}
->>>>>>> origin/new_components
         onPress={() => setEditPreview((current) => !current)}
         theme="caregiver"
         variant="secondary"
@@ -132,13 +132,10 @@ export function CaregiverFamilyScreen({ onOpenSetup }: { onOpenSetup: () => void
   );
 }
 
-<<<<<<< HEAD
 function FamilyState({ title, body, actionLabel, onAction }: { title: string; body: string; actionLabel?: string; onAction?: () => void }) {
   return <ScreenScroll theme="caregiver"><PageHeader eyebrow="Family" title={title} subtitle={body} theme="caregiver" /><SurfaceCard theme="caregiver" style={styles.membersCard}><Text style={styles.overviewTitle}>{title}</Text><Text style={styles.overviewBody}>{body}</Text>{actionLabel && onAction ? <MenteButton label={actionLabel} onPress={onAction} theme="caregiver" /> : null}</SurfaceCard></ScreenScroll>;
 }
 
-=======
->>>>>>> origin/new_components
 const styles = StyleSheet.create({
   overviewCard: {
     gap: spacing.md,
@@ -171,6 +168,37 @@ const styles = StyleSheet.create({
     color: caregiverTheme.colors.textMuted,
     fontSize: 14,
     lineHeight: 20,
+  },
+  developmentCodeCard: {
+    gap: spacing.sm,
+    marginBottom: spacing.xl,
+    padding: spacing.md,
+  },
+  developmentCodeHeading: {
+    alignItems: 'flex-start',
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  developmentCodeCopy: {
+    flex: 1,
+    gap: spacing.xxs,
+  },
+  developmentCodeTitle: {
+    color: caregiverTheme.colors.text,
+    fontSize: 15,
+    fontWeight: '800',
+  },
+  developmentCodeBody: {
+    color: caregiverTheme.colors.textMuted,
+    fontSize: 13,
+    lineHeight: 19,
+  },
+  developmentCode: {
+    color: caregiverTheme.colors.primary,
+    fontSize: 30,
+    fontWeight: '900',
+    letterSpacing: 6,
+    textAlign: 'center',
   },
   coverageRow: {
     alignItems: 'center',

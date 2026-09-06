@@ -1,5 +1,5 @@
 import { getApiBaseUrl } from './config';
-import type { CaregiverUserDto, FamilyDto, PatientDto, PatientOverviewDto, SessionDto } from './contracts/caregiver';
+import type { CaregiverUserDto, DevelopmentAccessCodeDto, FamilyDto, PatientDto, PatientOverviewDto, SessionDto } from './contracts/caregiver';
 import type { MemoryDto } from './contracts/patient';
 import type {
   CallScheduleDto,
@@ -16,6 +16,7 @@ export interface CaregiverClient {
   getOverview(patientId: string, signal?: AbortSignal): Promise<PatientOverviewDto>;
   listFamilies(signal?: AbortSignal): Promise<FamilyDto[]>;
   listFamilyPatients(familyId: string, signal?: AbortSignal): Promise<PatientDto[]>;
+  getDevelopmentAccessCode(patientId: string, signal?: AbortSignal): Promise<DevelopmentAccessCodeDto>;
   listSessions(patientId: string, source?: 'CALL' | 'GAME', signal?: AbortSignal): Promise<SessionDto[]>;
   listMemories(patientId: string, signal?: AbortSignal): Promise<MemoryDto[]>;
   listAlerts(patientId: string, signal?: AbortSignal): Promise<import('./contracts/caregiver').AlertDto[]>;
@@ -38,6 +39,7 @@ export function createCaregiverClient(accessToken: string): CaregiverClient {
     getOverview: (patientId, signal) => http.get(`/patients/${encodeURIComponent(patientId)}/overview`, { signal }),
     listFamilies: (signal) => http.get('/families', { signal }),
     listFamilyPatients: (familyId, signal) => http.get(`/families/${encodeURIComponent(familyId)}/patients`, { signal }),
+    getDevelopmentAccessCode: (patientId, signal) => http.get(`/patients/${encodeURIComponent(patientId)}/development-access-code`, { signal }),
     listSessions: (patientId, source, signal) => {
       const query = source ? `?source=${source}` : '';
       return http.get(`/patients/${encodeURIComponent(patientId)}/sessions${query}`, { signal });

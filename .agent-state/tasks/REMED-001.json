@@ -1,0 +1,27 @@
+{
+  "id": "REMED-001",
+  "claim_key": "frontend.production-public-configuration",
+  "title": "WP1: restore production public configuration",
+  "type": "BUG",
+  "owner": "FRONTEND",
+  "model_class": "STANDARD",
+  "priority": "HIGH",
+  "status": "DONE",
+  "objective": "Inline the existing Expo public configuration correctly in release bundles, with regression evidence for web, Android and iOS transforms.",
+  "dependencies": [],
+  "execution_mode": "WRITE",
+  "allowed_scope": ["src/api/config.ts", "src/api/config.production.test.js", "docs/reviews/deployment-readiness.md", "docs/plans/deployment-remediation.md", ".agent-state/**"],
+  "read_only_scope": ["package.json", "babel.config.js", "app.json", "src/api/**", "node_modules/babel-preset-expo/**"],
+  "forbidden_scope": ["backend/**", "credentials", "remote services", "commits", "pushes"],
+  "acceptance_criteria": ["Release configuration works without runtime environment injection", "Production mocks remain disabled", "Missing or invalid configuration still fails closed", "Existing frontend quality gate passes"],
+  "required_tests": ["npm test -- --no-cache src/api/config.production.test.js", "npm run typecheck", "npm run lint", "npm test -- --no-cache", "Expo Doctor", "npm run web:export"],
+  "workspace": "/home/rosso/Projects/Mente",
+  "branch": "fix/mente-foundation-integration",
+  "result": {
+    "summary": "BOSS ACCEPT for WP1 only: static public references; 18 production-transform regressions; final 18 suites/65 tests, typecheck/lint, Doctor21/21, synthetic export/browser checks pass. Independent Supervisor APPROVED.",
+    "handoff": ".agent-state/handoffs/REMED-001.md"
+  },
+  "review_status": "APPROVE",
+  "qa_status": "PASS",
+  "blockers": []
+}

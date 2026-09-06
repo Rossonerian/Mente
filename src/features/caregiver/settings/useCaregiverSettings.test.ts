@@ -1,6 +1,6 @@
 import { QueryClient } from '@tanstack/react-query';
 import type { CaregiverSettingsFormValues } from '../../../api/adapters/caregiverSettings';
-import { applySettingsSaveSuccess, mergeSavedFormValues } from './useCaregiverSettings';
+import { applySettingsSaveSuccess, isCurrentCaregiverSession, mergeSavedFormValues } from './useCaregiverSettings';
 import { caregiverSettingsKeys } from './queryKeys';
 
 const formValues: CaregiverSettingsFormValues = {
@@ -33,5 +33,16 @@ describe('caregiver settings save behavior', () => {
   it('isolates settings keys between caregiver accounts and patients', () => {
     expect(caregiverSettingsKeys.detail('caregiver-1', 'patient-1')).not.toEqual(caregiverSettingsKeys.detail('caregiver-2', 'patient-1'));
     expect(caregiverSettingsKeys.detail('caregiver-1', 'patient-1')).not.toEqual(caregiverSettingsKeys.detail('caregiver-1', 'patient-2'));
+  });
+
+  it('does not allow a late mutation callback to apply after the caregiver session changes', () => {
+    expect(isCurrentCaregiverSession(
+      { caregiverId: 'caregiver-2', accessToken: 'new-token' },
+      { caregiverId: 'caregiver-1', accessToken: 'old-token' },
+    )).toBe(false);
+    expect(isCurrentCaregiverSession(
+      { caregiverId: 'caregiver-1', accessToken: 'new-token' },
+      { caregiverId: 'caregiver-1', accessToken: 'new-token' },
+    )).toBe(true);
   });
 });

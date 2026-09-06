@@ -1,0 +1,27 @@
+{
+  "id": "SUP-001",
+  "claim_key": "review.remediation-scope",
+  "title": "Independent remediation scope and final review",
+  "type": "TASK",
+  "owner": "SUPERVISOR",
+  "model_class": "STANDARD",
+  "priority": "HIGH",
+  "status": "DONE",
+  "objective": "Independently review the public configuration fix and its evidence without changing implementation.",
+  "dependencies": [],
+  "execution_mode": "READ_ONLY",
+  "allowed_scope": ["read-only review handoff"],
+  "read_only_scope": ["src/api/config.ts", "src/api/config.production.test.js", "package.json", "babel.config.js", ".agent-state/**"],
+  "forbidden_scope": ["all writes", "installs", "remote services", "commits", "pushes"],
+  "acceptance_criteria": ["Report APPROVED or REJECTED with concrete evidence", "Do not certify unexecuted native or live backend checks"],
+  "required_tests": ["Read-only source and evidence inspection"],
+  "workspace": "/home/rosso/Projects/Mente",
+  "branch": "fix/mente-foundation-integration",
+  "result": {
+    "summary": "Independent read-only Supervisor APPROVED final WP1 code/test review with no blocking findings; root subsequently verified final exact-tree suite65/65. No claim of native/live authentication verification or WP2–WP8 completion.",
+    "handoff": ".agent-state/handoffs/REMED-001.md"
+  },
+  "review_status": "NOT_REQUIRED",
+  "qa_status": "NOT_REQUIRED",
+  "blockers": []
+}

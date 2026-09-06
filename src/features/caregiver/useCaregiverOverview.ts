@@ -54,7 +54,11 @@ export function useCaregiverOverview(accessToken: string | null, caregiverId: st
     const staleData = overview.data ? adaptCaregiverOverview(overview.data, new Date(overview.dataUpdatedAt)) : undefined;
     return { kind: 'error', error, retry: () => void families.refetch(), staleData };
   }
-  if (families.isPending || patients.isPending || overview.isPending) return { kind: 'loading' };
+  if (families.isPending) return { kind: 'loading' };
+  if (!families.data?.length) return { kind: 'empty' };
+  if (patients.isPending) return { kind: 'loading' };
+  if (!patients.data?.length) return { kind: 'empty' };
+  if (overview.isPending) return { kind: 'loading' };
   if (!familyId || !patientId || !overview.data) return { kind: 'empty' };
   return {
     kind: 'ready',

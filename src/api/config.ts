@@ -1,9 +1,18 @@
 import { ApiError } from './errors';
 
-type ExpoEnvironment = Record<string, string | undefined>;
+// Compile-time shape only; this does not introduce a Node runtime into the app.
+declare const process: {
+  readonly env: {
+    readonly EXPO_PUBLIC_API_BASE_URL?: string;
+    readonly EXPO_PUBLIC_SUPABASE_URL?: string;
+    readonly EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY?: string;
+    readonly EXPO_PUBLIC_MENTE_MOCK_MODE?: string;
+  };
+};
 
-const environment = (globalThis as typeof globalThis & { process?: { env?: ExpoEnvironment } }).process?.env;
-const apiBaseUrl = environment?.EXPO_PUBLIC_API_BASE_URL?.trim();
+// Expo statically replaces these direct references in release bundles.
+// Do not alias process.env: native/web clients have no runtime environment source.
+const apiBaseUrl = process.env.EXPO_PUBLIC_API_BASE_URL?.trim();
 
 export function getApiBaseUrl(): string {
   if (!apiBaseUrl) {
@@ -27,8 +36,8 @@ export function getApiBaseUrl(): string {
 }
 
 export function getSupabasePublicConfig(): { url: string; publishableKey: string } | null {
-  const url = environment?.EXPO_PUBLIC_SUPABASE_URL?.trim();
-  const publishableKey = environment?.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY?.trim();
+  const url = process.env.EXPO_PUBLIC_SUPABASE_URL?.trim();
+  const publishableKey = process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY?.trim();
   if (!url || !publishableKey) return null;
   try {
     const parsed = new URL(url);
@@ -42,4 +51,4 @@ export function getSupabasePublicConfig(): { url: string; publishableKey: string
   }
 }
 
-export const isDevelopmentMockMode = __DEV__ && environment?.EXPO_PUBLIC_MENTE_MOCK_MODE === 'true';
+export const isDevelopmentMockMode = __DEV__ && process.env.EXPO_PUBLIC_MENTE_MOCK_MODE === 'true';

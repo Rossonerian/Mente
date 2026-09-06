@@ -38,4 +38,16 @@ describe('CaregiverClient settings contract', () => {
     expect(fetchMock).toHaveBeenNthCalledWith(2, 'http://localhost:8000/v1/patients/patient-1/alerts', expect.objectContaining({ headers: expect.objectContaining({ Authorization: 'Bearer caregiver-token' }) }));
     expect(fetchMock).toHaveBeenNthCalledWith(3, 'http://localhost:8000/v1/patients/patient-1/alerts/alert-1/acknowledge', expect.objectContaining({ method: 'POST', headers: expect.objectContaining({ Authorization: 'Bearer caregiver-token' }) }));
   });
+
+  it('uses the caregiver-only development access-code route', async () => {
+    const fetchMock = jest.fn().mockResolvedValue({ ok: true, json: async () => ({ enabled: true, patient_id: 'patient-1', code: '482916' }) });
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+    await createCaregiverClient('caregiver-token').getDevelopmentAccessCode('patient-1');
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      'http://localhost:8000/v1/patients/patient-1/development-access-code',
+      expect.objectContaining({ headers: expect.objectContaining({ Authorization: 'Bearer caregiver-token' }) }),
+    );
+  });
 });
