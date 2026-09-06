@@ -58,13 +58,29 @@ function ensureGlassFilter() {
   root.append(svg);
 }
 
-function browserSupportsBackdropFilter(filterValue: string) {
+// Module-level cache for CSS backdrop filter feature checks.
+// Browser feature support does not change during runtime, so caching eliminates
+// repeated window.CSS.supports DOM queries on every GlassSurface component render.
+const backdropFilterSupportCache = new Map<string, boolean>();
+
+export function browserSupportsBackdropFilter(filterValue: string): boolean {
   if (typeof window === 'undefined' || typeof window.CSS?.supports !== 'function') return false;
 
-  return (
+  const cached = backdropFilterSupportCache.get(filterValue);
+  if (cached !== undefined) {
+    return cached;
+  }
+
+  const supported =
     window.CSS.supports('backdrop-filter', filterValue) ||
-    window.CSS.supports('-webkit-backdrop-filter', filterValue)
-  );
+    window.CSS.supports('-webkit-backdrop-filter', filterValue);
+
+  backdropFilterSupportCache.set(filterValue, supported);
+  return supported;
+}
+
+export function clearBackdropFilterSupportCache(): void {
+  backdropFilterSupportCache.clear();
 }
 
 function getWebBackdropStyle(filterValue: string) {
