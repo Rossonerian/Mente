@@ -24,7 +24,14 @@ class _UnavailableSupabaseTokenVerifier:
 
 def create_app(settings_override: Settings | None = None) -> FastAPI:
     settings_value = settings_override or get_settings()
-    engine = create_database_engine(settings_value.database_url)
+    engine = create_database_engine(
+        settings_value.database_url,
+        pool_size=settings_value.db_pool_size,
+        max_overflow=settings_value.db_max_overflow,
+        pool_timeout=settings_value.db_pool_timeout_seconds,
+        connect_timeout=settings_value.db_connect_timeout_seconds,
+        statement_timeout_ms=settings_value.db_statement_timeout_ms,
+    )
     session_factory = create_session_factory(engine)
 
     @asynccontextmanager
@@ -82,8 +89,6 @@ def create_app(settings_override: Settings | None = None) -> FastAPI:
 
     @app.get("/health", tags=["operations"])
     def health(request: Request) -> dict[str, str]:
-        with request.app.state.session_factory() as db:
-            db.execute(text("SELECT 1"))
         return {"status": "ok", "service": settings_value.app_name, "version": "0.1.0"}
 
     @app.get("/ready", tags=["operations"], response_model=None)

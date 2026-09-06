@@ -2,6 +2,7 @@ from datetime import datetime, timezone
 
 from fastapi import HTTPException, status
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from ..models import CognitiveSession, SessionMetric, utc_now
@@ -14,6 +15,7 @@ MAX_SESSION_DURATION_MS = 12 * 60 * 60 * 1000
 
 
 def add_metric(db: Session, session: CognitiveSession, payload: MetricCreate) -> tuple[SessionMetric, bool]:
+    session = _lock_persisted_session(db, session)
     fingerprint = payload_fingerprint(payload.model_dump(mode="json"))
     existing = db.scalar(
         select(SessionMetric).where(
@@ -45,8 +47,27 @@ def add_metric(db: Session, session: CognitiveSession, payload: MetricCreate) ->
         recorded_at=payload.recorded_at or utc_now(),
         metadata_json=payload.metadata_json,
     )
-    db.add(metric)
-    db.flush()
+    try:
+        # A savepoint lets us recover an expected idempotency collision without
+        # discarding the surrounding request transaction.
+        with db.begin_nested():
+            db.add(metric)
+            db.flush()
+    except IntegrityError as exc:
+        existing = db.scalar(
+            select(SessionMetric).where(
+                SessionMetric.session_id == session.id,
+                SessionMetric.client_metric_id == payload.client_metric_id,
+            )
+        )
+        if existing is None:
+            raise
+        if existing.idempotency_fingerprint != fingerprint:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="client_metric_id was replayed with different content",
+            ) from exc
+        return existing, False
     return metric, True
 
 
@@ -59,6 +80,7 @@ def finalize_session(
     termination_reason: str | None,
     metadata_update: dict | None = None,
 ) -> CognitiveSession:
+    session = _lock_persisted_session(db, session)
     if final_status not in TERMINAL_STATUSES:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail="Invalid terminal status")
 
@@ -121,3 +143,10 @@ def finalize_session(
 
 def _as_utc(value: datetime) -> datetime:
     return value.replace(tzinfo=timezone.utc) if value.tzinfo is None else value.astimezone(timezone.utc)
+
+
+def _lock_persisted_session(db: Session, session: CognitiveSession) -> CognitiveSession:
+    if session.id is None:
+        return session
+    locked = db.scalar(select(CognitiveSession).where(CognitiveSession.id == session.id).with_for_update())
+    return locked or session

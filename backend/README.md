@@ -17,7 +17,25 @@ cp .env.example .env
 ```
 
 Use only synthetic local data. `GET /health` verifies liveness and `GET /ready` verifies the configured database
-connection without returning internals. The generated local OpenAPI contract is available at `/docs`.
+connection without returning internals. The generated local OpenAPI contract is available at `/docs`. The
+container's default command runs only the API; execute `alembic upgrade head` as a separate release step with a
+migration credential before starting or rolling out the runtime.
+
+## Repeatable local patient connection
+
+For local or automated testing only, configure a six-digit development connection code and one local patient in the
+untracked `backend/.env` file:
+
+```dotenv
+DEVELOPMENT_ADMIN_CODE=482916
+DEVELOPMENT_PATIENT_ID=<id returned by caregiver setup>
+```
+
+After restarting the API, an authenticated caregiver sees the code on the Family screen. Enter `482916` on the
+patient device connection screen to issue a fresh device credential for that configured patient. Reusing the code
+revokes the previous active test-device credential for that patient, so old test sessions cannot remain connected.
+This fixture is accepted only when `ENVIRONMENT` is `development` or `test`; production configuration rejects it at
+startup. It does not sign in caregivers, grant caregiver permissions, or replace the normal one-time join-code flow.
 
 ## Identity and data boundaries
 
@@ -37,7 +55,7 @@ connection without returning internals. The generated local OpenAPI contract is 
 
 Alembic is the only schema-migration authority in this repository. Use `alembic upgrade head` against a disposable
 local database before deploying. Runtime database users need only the application privileges; migration credentials
-must be separate. Production requires PostgreSQL, bounded database pools/timeouts, HTTPS behind a trusted proxy,
+must be separate. Production requires PostgreSQL, bounded database pools/timeouts including a statement timeout, HTTPS behind a trusted proxy,
 explicit HTTPS CORS origins, external rate limiting for multi-worker deployments, and redacted structured logs.
 
 This repository does not contain Supabase CLI configuration, remote credentials, storage bucket policies, or remote

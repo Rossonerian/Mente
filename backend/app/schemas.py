@@ -326,6 +326,12 @@ class DeviceBindResponse(BaseModel):
     patient: PatientRead
 
 
+class DevelopmentAccessCodeRead(BaseModel):
+    enabled: bool
+    patient_id: str
+    code: str | None = None
+
+
 class DeviceRead(ApiModel):
     id: str
     patient_id: str

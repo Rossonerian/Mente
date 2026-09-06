@@ -13,10 +13,11 @@ import { isDevelopmentMockMode } from '../../api/config';
 import type { GameMetricDto, MemoryDto, PatientSessionDto } from '../../api/contracts/patient';
 import { patientDeviceStore } from '../../auth/patientDeviceStore';
 import { createSkippedGameMetric, usePatientGameWrite } from '../../features/patient/usePatientSession';
+import { serializePendingGameWrite } from '../../features/patient/pendingGameWrite';
 
-export function PatientInGameScreen({ onComplete, patientToken = null, session = null, memories = [] }: { onComplete: () => void; patientToken?: string | null; session?: PatientSessionDto | null; memories?: MemoryDto[] }) {
+export function PatientInGameScreen({ onComplete, onExit, patientToken = null, session = null, memories = [] }: { onComplete: () => void; onExit: () => void; patientToken?: string | null; session?: PatientSessionDto | null; memories?: MemoryDto[] }) {
   const [promptIndex, setPromptIndex] = useState(0);
-  const [message, setMessage] = useState('When you are ready, listen to the moment.');
+  const [message, setMessage] = useState('When you are ready, look over this familiar moment.');
   const [writeError, setWriteError] = useState<string | null>(null);
   const [failedFinalize, setFailedFinalize] = useState<{ status: 'COMPLETED' | 'EARLY_TERMINATED'; terminationReason?: string } | null>(null);
   const [failedMetric, setFailedMetric] = useState<{ promptIndex: number; payload: GameMetricDto } | null>(null);
@@ -27,7 +28,7 @@ export function PatientInGameScreen({ onComplete, patientToken = null, session =
   if (!prompt) return <ScreenScroll theme="patient"><SoftPanel theme="patient" style={styles.messagePanel}><Text style={styles.messageText}>There are no familiar moments ready right now. You can return whenever it feels right.</Text></SoftPanel></ScreenScroll>;
 
   const handleRepeat = () => {
-    setMessage(`I’ll share ${prompt.personName}’s moment again.`);
+    setMessage(`Here is ${prompt.personName}’s familiar moment again.`);
   };
 
   const finish = async (status: 'COMPLETED' | 'EARLY_TERMINATED', terminationReason?: string) => {
@@ -41,7 +42,7 @@ export function PatientInGameScreen({ onComplete, patientToken = null, session =
       await patientDeviceStore.removePendingWrite();
       onComplete();
     } catch {
-      await patientDeviceStore.setPendingWrite(JSON.stringify({ sessionId: session.id, payload }));
+      await patientDeviceStore.setPendingWrite(serializePendingGameWrite({ kind: 'finalize', sessionId: session.id, payload }));
       setFailedFinalize({ status, terminationReason });
       setWriteError('This moment is still open. You can try saving your gentle close again, or return without saying it was completed.');
     }
@@ -68,6 +69,7 @@ export function PatientInGameScreen({ onComplete, patientToken = null, session =
       setFailedMetric(null);
       await advanceAfterSkip(fromPromptIndex);
     } catch {
+      await patientDeviceStore.setPendingWrite(serializePendingGameWrite({ kind: 'metric', sessionId: session.id, promptIndex: fromPromptIndex, payload }));
       setFailedMetric({ promptIndex: fromPromptIndex, payload });
       setWriteError('Mente could not save that step. Nothing was marked complete. Please try saving it again or stop for now.');
     }
@@ -91,7 +93,7 @@ export function PatientInGameScreen({ onComplete, patientToken = null, session =
       <GlassSurface theme="patient" variant="focus" style={styles.promptCard}>
         <View style={styles.promptTopRow}>
           <SoftPanel theme="patient" style={styles.soundPanel}>
-            <MenteIcon name="volume-medium-outline" size={29} color={patientTheme.colors.primary} />
+            <MenteIcon name="heart-outline" size={29} color={patientTheme.colors.primary} />
           </SoftPanel>
           <Text style={styles.promptTag}>Familiar memory</Text>
         </View>
@@ -113,10 +115,10 @@ export function PatientInGameScreen({ onComplete, patientToken = null, session =
 
       <View style={styles.actionFooter}>
         <Text style={styles.footerPrompt}>Choose what feels right.</Text>
-        <MenteButton label="Repeat" onPress={handleRepeat} theme="patient" variant="secondary" iconName="refresh-outline" style={styles.actionButton} />
+        <MenteButton label="Show again" onPress={handleRepeat} theme="patient" variant="secondary" iconName="refresh-outline" style={styles.actionButton} />
         <MenteButton label={metric.isPending ? 'Saving this step…' : 'Skip'} onPress={handleSkip} disabled={metric.isPending || finalize.isPending || Boolean(failedMetric)} theme="patient" variant="secondary" iconName="arrow-forward-outline" style={styles.actionButton} />
         <MenteButton label={finalize.isPending ? 'Saving gentle close…' : 'Stop'} onPress={() => void finish('EARLY_TERMINATED', 'PATIENT_STOP')} disabled={metric.isPending || finalize.isPending} theme="patient" variant="danger" iconName="stop-circle-outline" style={styles.actionButton} accessibilityHint="Ends this moment gently" />
-        {writeError ? <SoftPanel theme="patient" style={styles.failedWritePanel}><Text accessibilityLiveRegion="polite" style={styles.failedWriteText}>{writeError}</Text>{failedMetric ? <MenteButton label="Try saving that step again" onPress={() => void saveSkip(failedMetric.payload, failedMetric.promptIndex)} disabled={metric.isPending} theme="patient" variant="secondary" /> : null}{failedFinalize ? <MenteButton label="Try saving again" onPress={() => void finish(failedFinalize.status, failedFinalize.terminationReason)} theme="patient" variant="secondary" /> : null}</SoftPanel> : null}
+        {writeError ? <SoftPanel theme="patient" style={styles.failedWritePanel}><Text accessibilityLiveRegion="polite" style={styles.failedWriteText}>{writeError}</Text>{failedMetric ? <MenteButton label="Try saving that step again" onPress={() => void saveSkip(failedMetric.payload, failedMetric.promptIndex)} disabled={metric.isPending} theme="patient" variant="secondary" /> : null}{failedFinalize ? <MenteButton label="Try saving again" onPress={() => void finish(failedFinalize.status, failedFinalize.terminationReason)} disabled={finalize.isPending} theme="patient" variant="secondary" /> : null}<MenteButton label="Leave safely" onPress={onExit} disabled={metric.isPending || finalize.isPending} theme="patient" variant="quiet" accessibilityHint="Returns to the patient home without showing this moment as complete" /></SoftPanel> : null}
       </View>
     </ScreenScroll>
   );

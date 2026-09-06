@@ -42,7 +42,7 @@ function PatientFamilyContent({ family }: { family: FamilyMember[] }) {
 
       <GlassSurface theme="patient" variant="focus" style={styles.introCard}>
         <Text style={styles.introTitle}>Your family is close</Text>
-        <Text style={styles.introBody}>Choose a voice or memory to sit with for a little while. There is nothing to get right.</Text>
+        <Text style={styles.introBody}>Choose a familiar person or memory to sit with for a little while. There is nothing to get right.</Text>
       </GlassSurface>
 
       <SurfaceCard theme="patient" style={styles.membersCard}>
@@ -61,14 +61,14 @@ function PatientFamilyContent({ family }: { family: FamilyMember[] }) {
         </SoftPanel>
       ) : null}
       <MenteButton
-        label={selectedMember ? `Play ${selectedMember.name.split(' ')[0]}’s hello again` : 'Play a familiar hello'}
+        label={selectedMember ? `Show ${selectedMember.name.split(' ')[0]}’s memory again` : 'Show a familiar memory'}
         onPress={() => setPlayedName(selectedMember?.name.split(' ')[0] ?? family[0].name.split(' ')[0])}
         theme="patient"
         variant="secondary"
-        iconName="volume-medium-outline"
+        iconName="refresh-outline"
         style={styles.fullButton}
       />
-      <Text style={styles.note}>Voice moments are gentle prompts, not a test.</Text>
+      <Text style={styles.note}>Memory moments are gentle prompts, not a test.</Text>
     </ScreenScroll>
   );
 }

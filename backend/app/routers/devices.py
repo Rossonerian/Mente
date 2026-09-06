@@ -1,3 +1,4 @@
+import secrets
 from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, HTTPException, Request, status
@@ -7,6 +8,7 @@ from ..dependencies import CurrentUser, DbSession, PatientDeviceAuth, require_pa
 from ..models import FamilyMemory, Patient, PatientDevice, PatientJoinCode, utc_now
 from ..rate_limit import enforce_rate_limit
 from ..schemas import (
+    DevelopmentAccessCodeRead,
     DeviceBindRequest,
     DeviceBindResponse,
     DeviceRead,
@@ -18,12 +20,12 @@ from ..schemas import (
 )
 from ..security import generate_device_token, generate_join_code, hash_opaque_token
 
-caregiver_router = APIRouter(prefix="/patients/{patient_id}/join-codes", tags=["patient devices"])
+caregiver_router = APIRouter(prefix="/patients/{patient_id}", tags=["patient devices"])
 device_management_router = APIRouter(prefix="/patients/{patient_id}/devices", tags=["patient devices"])
 patient_router = APIRouter(prefix="/patient", tags=["patient app"])
 
 
-@caregiver_router.post("", response_model=JoinCodeRead, status_code=status.HTTP_201_CREATED)
+@caregiver_router.post("/join-codes", response_model=JoinCodeRead, status_code=status.HTTP_201_CREATED)
 def create_join_code(
     patient_id: str,
     payload: JoinCodeCreate,
@@ -63,11 +65,61 @@ def create_join_code(
     return JoinCodeRead(code=code, patient_id=patient.id, expires_at=expires_at)
 
 
+@caregiver_router.get("/development-access-code", response_model=DevelopmentAccessCodeRead)
+def get_development_access_code(
+    patient_id: str,
+    request: Request,
+    user: CurrentUser,
+    db: DbSession,
+) -> DevelopmentAccessCodeRead:
+    patient = require_patient_access(db, user.id, patient_id)
+    settings = request.app.state.settings
+    enabled = (
+        settings.environment in {"development", "test"}
+        and settings.development_admin_code is not None
+        and settings.development_patient_id == patient.id
+    )
+    return DevelopmentAccessCodeRead(
+        enabled=enabled,
+        patient_id=patient.id,
+        code=settings.development_admin_code if enabled else None,
+    )
+
+
 @patient_router.post("/bind", response_model=DeviceBindResponse)
 def bind_patient_device(payload: DeviceBindRequest, request: Request, db: DbSession) -> DeviceBindResponse:
     enforce_rate_limit(request, "patient-bind", request.app.state.settings.join_attempts_per_minute)
-    record = db.scalar(select(PatientJoinCode).where(PatientJoinCode.code_hash == hash_opaque_token(payload.code)))
     now = datetime.now(timezone.utc)
+
+    settings = request.app.state.settings
+    if _is_development_admin_code(payload.code, settings):
+        if settings.development_patient_id is None:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Development access is unavailable",
+            )
+        patient = db.scalar(
+            select(Patient).where(Patient.id == settings.development_patient_id).with_for_update()
+        )
+        if patient is None or not patient.active:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Development patient is unavailable",
+            )
+        # Keep this fixture repeatable while ensuring an old local test token
+        # cannot remain active indefinitely after the code is reused.
+        db.execute(
+            update(PatientDevice)
+            .where(PatientDevice.patient_id == patient.id, PatientDevice.revoked_at.is_(None))
+            .values(revoked_at=now)
+        )
+        return _issue_patient_device(db, patient, now, settings.patient_device_token_days)
+
+    record = db.scalar(
+        select(PatientJoinCode)
+        .where(PatientJoinCode.code_hash == hash_opaque_token(payload.code))
+        .with_for_update()
+    )
     if record is None or record.used_at is not None or _as_utc(record.expires_at) <= now:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired join code")
 
@@ -75,21 +127,8 @@ def bind_patient_device(payload: DeviceBindRequest, request: Request, db: DbSess
     if patient is None or not patient.active:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Patient profile is unavailable")
 
-    raw_token = generate_device_token()
-    expires_at = now + timedelta(days=request.app.state.settings.patient_device_token_days)
-    device = PatientDevice(
-        patient_id=patient.id,
-        token_hash=hash_opaque_token(raw_token),
-        expires_at=expires_at,
-    )
     record.used_at = now
-    db.add(device)
-    db.commit()
-    return DeviceBindResponse(
-        patient_token=raw_token,
-        expires_at=expires_at,
-        patient=PatientRead.model_validate(patient),
-    )
+    return _issue_patient_device(db, patient, now, request.app.state.settings.patient_device_token_days)
 
 
 @device_management_router.get("", response_model=list[DeviceRead])
@@ -148,3 +187,30 @@ def patient_memories(device: PatientDeviceAuth, db: DbSession) -> list[FamilyMem
 
 def _as_utc(value: datetime) -> datetime:
     return value.replace(tzinfo=timezone.utc) if value.tzinfo is None else value.astimezone(timezone.utc)
+
+
+def _is_development_admin_code(code: str, settings: object) -> bool:
+    environment = getattr(settings, "environment", None)
+    configured_code = getattr(settings, "development_admin_code", None)
+    return (
+        environment in {"development", "test"}
+        and isinstance(configured_code, str)
+        and secrets.compare_digest(code, configured_code)
+    )
+
+
+def _issue_patient_device(db: DbSession, patient: Patient, now: datetime, token_days: int) -> DeviceBindResponse:
+    raw_token = generate_device_token()
+    expires_at = now + timedelta(days=token_days)
+    device = PatientDevice(
+        patient_id=patient.id,
+        token_hash=hash_opaque_token(raw_token),
+        expires_at=expires_at,
+    )
+    db.add(device)
+    db.commit()
+    return DeviceBindResponse(
+        patient_token=raw_token,
+        expires_at=expires_at,
+        patient=PatientRead.model_validate(patient),
+    )

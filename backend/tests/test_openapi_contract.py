@@ -27,6 +27,7 @@ def test_openapi_exposes_the_supabase_caregiver_profile_contract() -> None:
     assert "/v1/patients/{patient_id}/call-schedule" in specification["paths"]
     assert "/v1/patients/{patient_id}/notification-preferences" in specification["paths"]
     assert "/v1/patient/bind" in specification["paths"]
+    assert "/v1/patients/{patient_id}/development-access-code" in specification["paths"]
     assert "/v1/patient/game-sessions/{session_id}/metrics" in specification["paths"]
     assert "/v1/patient/game-sessions/{session_id}/finalize" in specification["paths"]
 

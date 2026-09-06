@@ -1,4 +1,4 @@
-import { createGameRoundId, createSkippedGameMetric, patientKeys } from './usePatientSession';
+import { createGameRoundId, createSkippedGameMetric, getOrCreatePatientClientId, patientKeys } from './usePatientSession';
 
 describe('patient session cache and idempotency boundaries', () => {
   it('never places the patient device token in a React Query key', () => {
@@ -12,5 +12,10 @@ describe('patient session cache and idempotency boundaries', () => {
     expect(createSkippedGameMetric('session-1', 'memory-1')).toEqual(
       createSkippedGameMetric('session-1', 'memory-1'),
     );
+  });
+
+  it('retains a pending start identifier until the server accepts it', () => {
+    expect(getOrCreatePatientClientId('game-existing', 'game')).toBe('game-existing');
+    expect(getOrCreatePatientClientId(null, 'game')).toMatch(/^game-/);
   });
 });

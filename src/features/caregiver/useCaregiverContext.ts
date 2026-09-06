@@ -11,6 +11,11 @@ export interface CaregiverPatientContext {
   patient: PatientDto;
 }
 
+interface CaregiverPatientContextData {
+  family: FamilyDto;
+  patient: PatientDto;
+}
+
 export type CaregiverContextState =
   | { kind: 'loading' }
   | { kind: 'empty'; retry: () => void }
@@ -30,13 +35,13 @@ export function useCaregiverPatientContext(accessToken: string | null, caregiver
   const query = useQuery({
     queryKey: caregiverContextKey(caregiverId ?? 'anonymous'),
     enabled: Boolean(clientResult.client && caregiverId),
-    queryFn: async ({ signal }): Promise<CaregiverPatientContext | null> => {
+    queryFn: async ({ signal }): Promise<CaregiverPatientContextData | null> => {
       const families = await clientResult.client!.listFamilies(signal);
       const family = families[0];
       if (!family) return null;
       const patients = await clientResult.client!.listFamilyPatients(family.id, signal);
       const patient = patients[0];
-      return patient ? { client: clientResult.client!, family, patient } : null;
+      return patient ? { family, patient } : null;
     },
     staleTime: 60_000,
   });
@@ -45,5 +50,9 @@ export function useCaregiverPatientContext(accessToken: string | null, caregiver
   if (!accessToken || query.isPending) return { kind: 'loading' };
   if (query.error instanceof ApiError) return { kind: 'error', error: query.error, retry };
   if (!query.data) return { kind: 'empty', retry };
-  return { kind: 'ready', data: query.data, isRefreshing: query.isFetching, refresh: retry };
+  return { kind: 'ready', data: attachCurrentCaregiverClient(query.data, clientResult.client!), isRefreshing: query.isFetching, refresh: retry };
+}
+
+export function attachCurrentCaregiverClient(data: CaregiverPatientContextData, client: CaregiverClient): CaregiverPatientContext {
+  return { ...data, client };
 }

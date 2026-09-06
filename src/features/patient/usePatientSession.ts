@@ -41,6 +41,10 @@ export function createPatientClientId(prefix: string): string {
   return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
+export function getOrCreatePatientClientId(currentId: string | null, prefix: string): string {
+  return currentId ?? createPatientClientId(prefix);
+}
+
 export function createGameRoundId(sessionId: string, promptId: string): string {
   return `${sessionId}:${promptId}`;
 }

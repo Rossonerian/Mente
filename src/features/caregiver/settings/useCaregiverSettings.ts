@@ -1,5 +1,5 @@
 import { type QueryClient, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import {
   adaptCaregiverSettings,
   type CaregiverSettingsFormValues,
@@ -34,6 +34,13 @@ interface UpdateSettingsInput {
   values: CaregiverSettingsFormValues;
   updateSchedule: boolean;
   updateNotificationPreference: boolean;
+}
+
+export function isCurrentCaregiverSession(
+  current: { caregiverId: string; accessToken: string },
+  expected: { caregiverId: string; accessToken: string },
+): boolean {
+  return current.caregiverId === expected.caregiverId && current.accessToken === expected.accessToken;
 }
 
 export interface UpdateSettingsResult {
@@ -99,6 +106,11 @@ export function useCaregiverSettingsQuery({ caregiverId, accessToken }: { caregi
 export function useUpdateCaregiverSettingsMutation({ caregiverId, accessToken }: { caregiverId: string; accessToken: string }) {
   const queryClient = useQueryClient();
   const client = useMemo(() => createCaregiverClient(accessToken), [accessToken]);
+  const currentSession = useRef({ caregiverId, accessToken });
+  useEffect(() => {
+    currentSession.current = { caregiverId, accessToken };
+  }, [accessToken, caregiverId]);
+  const isCurrentSession = () => isCurrentCaregiverSession(currentSession.current, { caregiverId, accessToken });
   return useMutation({
     mutationFn: async ({ patientId, values, updateSchedule, updateNotificationPreference }: UpdateSettingsInput): Promise<UpdateSettingsResult> => {
       const requests = toCaregiverSettingsRequests(values);
@@ -108,9 +120,11 @@ export function useUpdateCaregiverSettingsMutation({ caregiverId, accessToken }:
       return result;
     },
     onSuccess: (result, input) => {
+      if (!isCurrentSession()) return;
       applySettingsSaveSuccess(queryClient, caregiverId, input.patientId, result);
     },
     onError: (_error, input) => {
+      if (!isCurrentSession()) return;
       void queryClient.invalidateQueries({ queryKey: caregiverSettingsKeys.detail(caregiverId, input.patientId) });
     },
   });

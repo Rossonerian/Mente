@@ -1,5 +1,6 @@
 from fastapi import APIRouter, HTTPException, Response, status
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import selectinload
 
 from ..dependencies import CurrentUser, DbSession, PatientDeviceAuth, require_patient_access
@@ -56,7 +57,26 @@ def start_game_session(
         metadata_json=payload.metadata_json,
     )
     db.add(session)
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError as exc:
+        db.rollback()
+        existing = db.scalar(
+            select(CognitiveSession).where(
+                CognitiveSession.patient_id == device.patient_id,
+                CognitiveSession.source == "GAME",
+                CognitiveSession.external_id == payload.client_session_id,
+            )
+        )
+        if existing is None:
+            raise
+        if existing.idempotency_fingerprint != fingerprint:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="client_session_id was replayed with different content",
+            ) from exc
+        response.status_code = status.HTTP_200_OK
+        return existing
     db.refresh(session)
     return session
 
@@ -156,7 +176,7 @@ def _patient_session(db: DbSession, session_id: str, patient_id: str) -> Cogniti
             CognitiveSession.id == session_id,
             CognitiveSession.patient_id == patient_id,
             CognitiveSession.source == "GAME",
-        )
+        ).with_for_update()
     )
     if session is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Game session not found")

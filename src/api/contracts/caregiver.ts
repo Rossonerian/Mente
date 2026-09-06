@@ -97,3 +97,9 @@ export interface PatientOverviewDto {
   active_alerts: AlertDto[];
   trend: TrendDto;
 }
+
+export interface DevelopmentAccessCodeDto {
+  enabled: boolean;
+  patient_id: string;
+  code: string | null;
+}

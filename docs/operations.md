@@ -6,6 +6,12 @@ The root `.env.example` contains only Expo public values: API base URL, Supabase
 `backend/.env.example` contains server configuration. Never add database URLs with real passwords, Supabase private
 keys, patient device tokens, Twilio credentials, or call-bot keys to the Expo environment.
 
+For repeatable local patient testing, `backend/.env` may opt into the development-only `DEVELOPMENT_ADMIN_CODE=482916`
+fixture together with the ID of one synthetic local patient. The API rejects this configuration in production, scopes
+it to that patient, and exposes it only to that patient's authenticated caregiver Family screen. Caregiver sign-in still
+uses the configured Supabase session; the fixture only replaces the one-time patient-device bind code in local/test
+environments.
+
 For local development, use an isolated SQLite database and synthetic fixtures. For staging and production, use a
 separate PostgreSQL database, `AUTO_CREATE_TABLES=false`, Alembic migrations, a distinct server-only call-bot key,
 and explicit HTTPS `CORS_ORIGINS`. Production startup rejects missing Supabase URL, placeholder call-bot keys,
@@ -22,7 +28,8 @@ automatic schema creation, wildcard CORS, and non-HTTPS origins.
 4. Configure private media buckets, scoped authorization, bounded signed URLs, object-path/type/size validation,
    and backup/restore for both database and media. These policies are not implemented in this repository yet.
 5. Put FastAPI behind an HTTPS proxy with an explicit trusted-proxy policy, request IDs, redacted logs, bounded
-   database connection pools/timeouts, and a multi-instance rate-limit store.
+   database connection pools/timeouts, and a multi-instance rate-limit store. The container runtime does not run
+   migrations; run `alembic upgrade head` separately with migration-only credentials.
 6. Configure redirect allowlists, email/SMTP prerequisites, retention/consent policy, hosting region/domain, and
    incident ownership. Technical tests alone do not establish real-patient-data or compliance readiness.
 

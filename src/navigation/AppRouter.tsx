@@ -21,6 +21,8 @@ import { ConnectedFeatureState } from '../screens/ConnectedFeatureState';
 import { PatientDeviceAccessScreen } from '../screens/patient/PatientDeviceAccessScreen';
 import { patientDeviceStore } from '../auth/patientDeviceStore';
 import type { MemoryDto, PatientSessionDto } from '../api/contracts/patient';
+import { adaptMemoryToFamilyMember } from '../api/adapters/caregiverFamily';
+import { menteMockData } from '../data/mockData';
 
 export function AppRouter() {
   const queryClient = useQueryClient();
@@ -56,10 +58,10 @@ export function AppRouter() {
 
   if (role === 'caregiver') {
     if (!isDevelopmentMockMode && caregiverAuth.kind === 'loading') {
-      return <AppShell role="caregiver" tabs={caregiverTabs} activeRoute="home" onNavigate={() => undefined} onSwitchRole={switchRole} showTabs={false}><CaregiverLoadingScreen /></AppShell>;
+      return <AppShell role="caregiver" tabs={caregiverTabs} activeRoute="home" onNavigate={() => undefined} onSwitchRole={switchRole} showTabs={false} showPreviewBar={false}><CaregiverLoadingScreen /></AppShell>;
     }
     if (!isDevelopmentMockMode && caregiverAuth.kind === 'signed-out') {
-      return <AppShell role="caregiver" tabs={caregiverTabs} activeRoute="home" onNavigate={() => undefined} onSwitchRole={switchRole} showTabs={false}><CaregiverSignInScreen configured={caregiverAuth.configured} /></AppShell>;
+      return <AppShell role="caregiver" tabs={caregiverTabs} activeRoute="home" onNavigate={() => undefined} onSwitchRole={switchRole} showTabs={false} showPreviewBar={false}><CaregiverSignInScreen configured={caregiverAuth.configured} /></AppShell>;
     }
     const showTabs = isCaregiverTabRoute(route);
     return (
@@ -82,8 +84,8 @@ export function AppRouter() {
     );
   }
 
-  if (!isDevelopmentMockMode && patientDeviceLoading) return <AppShell role="patient" tabs={patientTabs} activeRoute="play" onNavigate={() => undefined} onSwitchRole={switchRole} showTabs={false}><ConnectedFeatureState role="patient" title="Preparing this device" body="Checking whether this device is connected to a family…" /></AppShell>;
-  if (!isDevelopmentMockMode && !patientToken) return <AppShell role="patient" tabs={patientTabs} activeRoute="play" onNavigate={() => undefined} onSwitchRole={switchRole} showTabs={false}><PatientDeviceAccessScreen onBound={() => { void patientDeviceStore.getToken().then(setPatientToken); }} /></AppShell>;
+  if (!isDevelopmentMockMode && patientDeviceLoading) return <AppShell role="patient" tabs={patientTabs} activeRoute="play" onNavigate={() => undefined} onSwitchRole={switchRole} showTabs={false} showPreviewBar={false}><ConnectedFeatureState role="patient" title="Preparing this device" body="Checking whether this device is connected to a family…" /></AppShell>;
+  if (!isDevelopmentMockMode && !patientToken) return <AppShell role="patient" tabs={patientTabs} activeRoute="play" onNavigate={() => undefined} onSwitchRole={switchRole} showTabs={false} showPreviewBar={false}><PatientDeviceAccessScreen onBound={() => { void patientDeviceStore.getToken().then(setPatientToken); }} /></AppShell>;
 
   const showTabs = isPatientTabRoute(route) && !hidesPatientTabs(route);
   return (
@@ -99,8 +101,8 @@ export function AppRouter() {
       {route === 'play' ? <PatientPlayScreen onNavigate={navigatePatient} patientToken={patientToken} onStart={(session, memories) => { setActiveGame({ patientToken, session, memories }); navigatePatient('in-game'); }} /> : null}
       {route === 'family' ? <PatientFamilyScreen patientToken={patientToken} /> : null}
       {route === 'help' ? <PatientHelpScreen onNavigate={navigatePatient} /> : null}
-      {route === 'in-game' ? <PatientInGameScreen session={activeGame?.patientToken === patientToken ? activeGame.session : null} memories={activeGame?.patientToken === patientToken ? activeGame.memories : []} patientToken={patientToken} onComplete={() => navigatePatient('complete')} /> : null}
-      {route === 'complete' ? <PatientCompleteScreen onReturnToPlay={() => { setActiveGame(null); navigatePatient('play'); }} onFamily={() => navigatePatient('family')} /> : null}
+      {route === 'in-game' ? <PatientInGameScreen session={activeGame?.patientToken === patientToken ? activeGame.session : null} memories={activeGame?.patientToken === patientToken ? activeGame.memories : []} patientToken={patientToken} onComplete={() => navigatePatient('complete')} onExit={() => { setActiveGame(null); navigatePatient('play'); }} /> : null}
+      {route === 'complete' ? <PatientCompleteScreen familyNames={isDevelopmentMockMode ? menteMockData.family.map(({ name }) => name) : activeGame?.patientToken === patientToken ? activeGame.memories.map(adaptMemoryToFamilyMember).map(({ name }) => name) : []} onReturnToPlay={() => { setActiveGame(null); navigatePatient('play'); }} onFamily={() => navigatePatient('family')} /> : null}
     </AppShell>
   );
 }
