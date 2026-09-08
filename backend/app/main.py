@@ -71,6 +71,8 @@ def create_app(settings_override: Settings | None = None) -> FastAPI:
     async def attach_request_id(request: Request, call_next: RequestResponseEndpoint) -> Response:
         response = await call_next(request)
         response.headers["X-Request-ID"] = uuid4().hex
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
         return response
 
     prefix = settings_value.api_prefix
