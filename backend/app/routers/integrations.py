@@ -1,5 +1,6 @@
 from fastapi import APIRouter, HTTPException, Response, status
 from sqlalchemy import or_, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import selectinload
 
 from ..dependencies import CallBotAuth, DbSession
@@ -15,10 +16,7 @@ from ..schemas import (
     CallBotScheduleItem,
     CallBotSessionIngest,
     CallScheduleRead,
-<<<<<<< HEAD
     MemoryRead,
-=======
->>>>>>> origin/new_components
     NotificationPreferenceRead,
     PatientRead,
     SessionRead,
@@ -76,19 +74,12 @@ def get_call_context(patient_id: str, _auth: CallBotAuth, db: DbSession) -> Call
     schedule = db.scalar(select(CallSchedule).where(CallSchedule.patient_id == patient_id))
     preference = db.get(NotificationPreference, patient_id)
     return CallBotContext(
-<<<<<<< HEAD
         patient=PatientRead.model_validate(patient),
         memories=[MemoryRead.model_validate(memory) for memory in memories],
         schedule=CallScheduleRead.model_validate(schedule) if schedule is not None else None,
         notification_preference=(
             NotificationPreferenceRead.model_validate(preference) if preference is not None else None
         ),
-=======
-        patient=patient,
-        memories=memories,
-        schedule=schedule,
-        notification_preference=preference,
->>>>>>> origin/new_components
     )
 
 
@@ -131,19 +122,40 @@ def ingest_call_session(
         started_at=payload.started_at,
         metadata_json=payload.metadata_json,
     )
-    db.add(session)
-    db.flush()
-    for metric_payload in payload.metrics:
-        add_metric(db, session, metric_payload)
-    finalize_session(
-        db,
-        session,
-        final_status=payload.status,
-        ended_at=payload.ended_at,
-        termination_reason=payload.termination_reason,
-        metadata_update=payload.metadata_json,
-    )
-    db.commit()
+    try:
+        db.add(session)
+        db.flush()
+        for metric_payload in payload.metrics:
+            add_metric(db, session, metric_payload)
+        finalize_session(
+            db,
+            session,
+            final_status=payload.status,
+            ended_at=payload.ended_at,
+            termination_reason=payload.termination_reason,
+            metadata_update=payload.metadata_json,
+        )
+        db.commit()
+    except IntegrityError as exc:
+        db.rollback()
+        existing = db.scalar(
+            select(CognitiveSession)
+            .options(selectinload(CognitiveSession.metrics))
+            .where(
+                CognitiveSession.patient_id == payload.patient_id,
+                CognitiveSession.source == "CALL",
+                CognitiveSession.external_id == payload.external_id,
+            )
+        )
+        if existing is None:
+            raise
+        if existing.idempotency_fingerprint != fingerprint:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="external_id was replayed with different content",
+            ) from exc
+        response.status_code = status.HTTP_200_OK
+        return existing
     stored_session = db.scalar(
         select(CognitiveSession)
         .options(selectinload(CognitiveSession.metrics))

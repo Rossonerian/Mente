@@ -1,6 +1,29 @@
 # Project Dashboard
 
-PROJECT STATUS: COMPLETE — MENTE-001 accepted and ready to merge
+PROJECT STATUS: ACTIVE — local remediation implemented; release remains BLOCKED
+
+CURRENT (supersedes historical readiness claims below)
+
+- Baseline: `e587a5c` on `main`; local remediation is applied in the working tree from the existing fix reference.
+- REMED-001 / WP1 — DONE, BOSS ACCEPT; direct Expo public configuration is covered
+  by 18 production-transform tests.
+- REMED-002 — implementation complete pending independent read-only review and final
+  root validation. It covers identity/cache safety, caregiver recovery, patient write
+  recovery, backend transaction collision handling, liveness/runtime database bounds,
+  and a development-only repeatable patient connection fixture.
+- Local admin testing path: configure safe public Expo values, start the isolated API,
+  create one synthetic caregiver family/patient, then set the development-only code
+  and patient ID in an untracked `backend/.env`.
+- Local evidence so far: frontend 20 suites/71 tests, backend 20 tests, typecheck,
+  lint, Expo Doctor 21/21, web export, backend Ruff/MyPy/Bandit/pip-audit and
+  disposable Alembic upgrade pass. PostgreSQL concurrency, live Supabase auth,
+  private media/RLS, and native-device behavior remain unverified.
+- Review findings/evidence: `docs/reviews/deployment-readiness.md`.
+- No remote changes, commits, pushes or deployments. Generated browser artifacts are
+  temporary and must not be retained in the worktree.
+- Physical Android validation is pending: `adb devices` has no authorized device.
+
+HISTORICAL HANDOFF (not current release acceptance)
 
 MILESTONE
 

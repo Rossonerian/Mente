@@ -1,18 +1,14 @@
-const patientTokenKey = 'mente.patient-device-token';
-const pendingWriteKey = 'mente.patient-pending-game-write';
-
-function storage(): Storage | null {
-  return typeof window === 'undefined' ? null : window.localStorage;
-}
+let patientToken: string | null = null;
+let pendingWrite: string | null = null;
 
 export const patientDeviceStore = {
-  async clearToken() { storage()?.removeItem(patientTokenKey); },
-  async getPendingWrite() { return storage()?.getItem(pendingWriteKey) ?? null; },
-  async getToken() { return storage()?.getItem(patientTokenKey) ?? null; },
-  async removePendingWrite() { storage()?.removeItem(pendingWriteKey); },
-  async setPendingWrite(value: string) { storage()?.setItem(pendingWriteKey, value); },
-  async setToken(value: string) { storage()?.setItem(patientTokenKey, value); },
+  async clearToken() { patientToken = null; },
+  async getPendingWrite() { return pendingWrite; },
+  async getToken() { return patientToken; },
+  async removePendingWrite() { pendingWrite = null; },
+  async setPendingWrite(value: string) { pendingWrite = value; },
+  async setToken(value: string) { patientToken = value; },
 };
 
-// This is deliberately not labeled secure: browsers do not offer the native storage guarantee.
-export const patientDeviceStoreSecurity = 'web-local-storage' as const;
+// Browser patient access is intentionally memory-only; a refresh requires a new caregiver-assisted bind.
+export const patientDeviceStoreSecurity = 'web-memory-only' as const;

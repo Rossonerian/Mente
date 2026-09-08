@@ -14,12 +14,8 @@
     },
     "plugins": [
       "expo-font",
-<<<<<<< HEAD
       "expo-status-bar",
       "expo-secure-store"
-=======
-      "expo-status-bar"
->>>>>>> origin/new_components
     ]
   }
 }

@@ -109,8 +109,8 @@ export const menteMockData: MenteMockData = {
       personId: 'ana',
       personName: 'Ana',
       relationship: 'your daughter',
-      title: 'A familiar voice',
-      prompt: 'Listen to Ana sharing a warm hello.',
+      title: 'A familiar hello',
+      prompt: 'Spend a little time with Ana’s warm hello.',
       memoryHint: 'Sunday lunches and the lemon cake recipe',
     },
     {
