@@ -36,6 +36,23 @@ def test_profile_and_family_access(client: TestClient, caregiver_setup: dict) ->
     assert hidden.status_code == 404
 
 
+def test_profile_creation_rejects_invalid_display_name(client: TestClient) -> None:
+    client.app.state.caregiver_token_verifier = StubSupabaseVerifier(
+        VerifiedSupabaseClaims(
+            subject="a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d",
+            email="validation_test@example.com",
+            role="authenticated",
+        )
+    )
+    headers = {"Authorization": "Bearer supabase-access-token"}
+    response = client.post(
+        "/v1/auth/profile",
+        headers=headers,
+        json={"display_name": "   "},
+    )
+    assert response.status_code == 422
+
+
 def test_memory_and_settings_are_available_to_call_bot(client: TestClient, caregiver_setup: dict) -> None:
     patient_id = caregiver_setup["patient_id"]
     headers = caregiver_setup["headers"]

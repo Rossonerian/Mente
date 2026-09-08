@@ -4,7 +4,7 @@ PROJECT STATUS: ACTIVE — local remediation implemented; release remains BLOCKE
 
 CURRENT (supersedes historical readiness claims below)
 
-- Baseline: `e587a5c` on `main`; local remediation is applied in the working tree from the existing fix reference.
+- Baseline: `e587a5c` on `main`; local remediation is applied from the existing fix reference (`a0cf0d3` on `fix/mente-foundation-integration`).
 - REMED-001 / WP1 — DONE, BOSS ACCEPT; direct Expo public configuration is covered
   by 18 production-transform tests.
 - REMED-002 — implementation complete pending independent read-only review and final
