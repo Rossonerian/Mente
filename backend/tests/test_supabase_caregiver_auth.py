@@ -123,3 +123,56 @@ def test_verifier_rejects_a_non_uuid_subject_even_when_the_signature_is_valid() 
 
     with pytest.raises(SupabaseTokenError, match="subject"):
         verifier.verify(token)
+
+
+def _configured_verifier(private_key):
+    verifier = SupabaseTokenVerifier("https://mente-test.supabase.co", "authenticated")
+    verifier._jwks_client = SimpleNamespace(
+        get_signing_key_from_jwt=lambda _token: SimpleNamespace(key=private_key.public_key())
+    )
+    return verifier
+
+
+def _signed_token(private_key, **overrides):
+    payload = {
+        "aud": "authenticated",
+        "email": "ana@example.com",
+        "exp": datetime.now(timezone.utc) + timedelta(minutes=5),
+        "iss": "https://mente-test.supabase.co/auth/v1",
+        "role": "authenticated",
+        "sub": "71d1a67f-a892-4ef1-b06d-489c69b455d0",
+    }
+    payload.update(overrides)
+    return encode(payload, private_key, algorithm="RS256", headers={"kid": "test"})
+
+
+def test_verifier_accepts_a_valid_signed_supabase_token() -> None:
+    private_key = rsa.generate_private_key(public_exponent=65_537, key_size=2_048)
+    claims = _configured_verifier(private_key).verify(_signed_token(private_key))
+    assert claims.subject == "71d1a67f-a892-4ef1-b06d-489c69b455d0"
+    assert claims.role == "authenticated"
+
+
+@pytest.mark.parametrize(
+    ("override", "message"),
+    [
+        ({"exp": datetime.now(timezone.utc) - timedelta(minutes=1)}, "Invalid token"),
+        ({"iss": "https://wrong.supabase.co/auth/v1"}, "Invalid token"),
+        ({"aud": "wrong-audience"}, "Invalid token"),
+    ],
+)
+def test_verifier_rejects_expired_issuer_and_audience_tokens(override, message: str) -> None:
+    private_key = rsa.generate_private_key(public_exponent=65_537, key_size=2_048)
+    with pytest.raises(SupabaseTokenError, match=message):
+        _configured_verifier(private_key).verify(_signed_token(private_key, **override))
+
+
+def test_verifier_rejects_unsupported_algorithm_without_network_access() -> None:
+    private_key = rsa.generate_private_key(public_exponent=65_537, key_size=2_048)
+    token = encode(
+        {"sub": "71d1a67f-a892-4ef1-b06d-489c69b455d0"},
+        "not-a-real-secret-long-enough-for-tests",
+        algorithm="HS256",
+    )
+    with pytest.raises(SupabaseTokenError, match="Unsupported token algorithm"):
+        _configured_verifier(private_key).verify(token)

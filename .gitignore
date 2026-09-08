@@ -13,3 +13,14 @@ coverage/
 !**/.env.example
 *.db
 *.sqlite
+supabase/.branches/
+supabase/.temp/
+supabase/.env
+supabase/.env.*
+!supabase/.env.example
+backend/.pytest_cache/
+backend/.mypy_cache/
+backend/.ruff_cache/
+backend/*.log
+*.pem
+*.key

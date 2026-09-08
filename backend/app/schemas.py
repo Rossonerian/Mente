@@ -157,6 +157,7 @@ class MemoryCreate(InputModel):
     prompt_text: str = Field(min_length=1, max_length=1000)
     accepted_answers: list[AcceptedAnswer] = Field(default_factory=list, max_length=20)
     asset_ref: str | None = Field(default=None, max_length=500)
+    asset_id: str | None = Field(default=None, max_length=36)
     consent_recorded_at: datetime
     active: bool = True
 
@@ -189,6 +190,7 @@ class MemoryUpdate(InputModel):
     prompt_text: str | None = Field(default=None, min_length=1, max_length=1000)
     accepted_answers: list[AcceptedAnswer] | None = Field(default=None, max_length=20)
     asset_ref: str | None = Field(default=None, max_length=500)
+    asset_id: str | None = Field(default=None, max_length=36)
     consent_recorded_at: datetime | None = None
     active: bool | None = None
 
@@ -225,10 +227,32 @@ class MemoryRead(ApiModel):
     prompt_text: str
     accepted_answers: list[str]
     asset_ref: str | None
+    asset_id: str | None
     active: bool
     consent_recorded_at: datetime
     created_at: datetime
     updated_at: datetime
+
+
+class AssetRead(ApiModel):
+    id: str
+    family_id: str
+    patient_id: str
+    storage_key: str
+    media_type: str
+    size_bytes: int
+    checksum_sha256: str | None
+    consent_recorded_at: datetime
+    created_by: str
+    status: str
+    created_at: datetime
+    deleted_at: datetime | None
+
+
+class AssetSignedUrl(BaseModel):
+    asset_id: str
+    expires_in: int
+    signed_url: str
 
 
 class CallScheduleUpsert(InputModel):

@@ -18,9 +18,14 @@ def create_database_engine(
     pool_timeout: int = 10,
     connect_timeout: int = 10,
     statement_timeout_ms: int = 15_000,
+    pool_recycle: int = 1_800,
 ) -> Engine:
     connect_args = {"check_same_thread": False} if database_url.startswith("sqlite") else {}
-    engine_options: dict[str, Any] = {"connect_args": connect_args, "pool_pre_ping": True}
+    engine_options: dict[str, Any] = {
+        "connect_args": connect_args,
+        "pool_pre_ping": True,
+        "pool_recycle": pool_recycle,
+    }
     if not database_url.startswith("sqlite"):
         engine_options.update(pool_size=pool_size, max_overflow=max_overflow, pool_timeout=pool_timeout)
         engine_options["connect_args"] = {

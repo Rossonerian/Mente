@@ -15,6 +15,7 @@ from sqlalchemy import (
     String,
     Text,
     UniqueConstraint,
+    Uuid,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -33,12 +34,15 @@ class User(Base):
     __tablename__ = "users"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
-    auth_user_id: Mapped[str | None] = mapped_column(String(36), unique=True, index=True, nullable=True)
+    auth_user_id: Mapped[str | None] = mapped_column(
+        Uuid(as_uuid=False).with_variant(String(36), "sqlite"), unique=True, index=True, nullable=True
+    )
     email: Mapped[str] = mapped_column(String(320), unique=True, index=True)
     display_name: Mapped[str] = mapped_column(String(120))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
 
     memberships: Mapped[list[FamilyMembership]] = relationship(back_populates="user", cascade="all, delete-orphan")
+    assets: Mapped[list[Asset]] = relationship(back_populates="created_by_user")
 
 
 class Family(Base):
@@ -98,12 +102,39 @@ class FamilyMemory(Base):
     prompt_text: Mapped[str] = mapped_column(Text)
     accepted_answers: Mapped[list[str]] = mapped_column(JSON, default=list)
     asset_ref: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    asset_id: Mapped[str | None] = mapped_column(
+        ForeignKey("assets.id", ondelete="SET NULL"), nullable=True, index=True
+    )
     active: Mapped[bool] = mapped_column(Boolean, default=True)
     consent_recorded_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, onupdate=utc_now)
 
     patient: Mapped[Patient] = relationship(back_populates="memories")
+    asset: Mapped[Asset | None] = relationship(back_populates="memories")
+
+
+class Asset(Base):
+    __tablename__ = "assets"
+    __table_args__ = (
+        Index("ix_assets_family_patient_status", "family_id", "patient_id", "status"),
+    )
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    family_id: Mapped[str] = mapped_column(ForeignKey("families.id", ondelete="CASCADE"), index=True)
+    patient_id: Mapped[str] = mapped_column(ForeignKey("patients.id", ondelete="CASCADE"), index=True)
+    storage_key: Mapped[str] = mapped_column(String(500), unique=True, index=True)
+    media_type: Mapped[str] = mapped_column(String(100))
+    size_bytes: Mapped[int] = mapped_column(Integer)
+    checksum_sha256: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    consent_recorded_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    created_by: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="RESTRICT"), index=True)
+    status: Mapped[str] = mapped_column(String(16), default="ACTIVE")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+    deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    created_by_user: Mapped[User] = relationship(back_populates="assets")
+    memories: Mapped[list[FamilyMemory]] = relationship(back_populates="asset")
 
 
 class CallSchedule(Base):

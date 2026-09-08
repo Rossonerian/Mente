@@ -103,3 +103,24 @@ export interface DevelopmentAccessCodeDto {
   patient_id: string;
   code: string | null;
 }
+
+export interface AssetDto {
+  id: string;
+  family_id: string;
+  patient_id: string;
+  storage_key: string;
+  media_type: string;
+  size_bytes: number;
+  checksum_sha256: string | null;
+  consent_recorded_at: string;
+  created_by: string;
+  status: 'ACTIVE' | 'DELETED';
+  created_at: string;
+  deleted_at: string | null;
+}
+
+export interface AssetSignedUrlDto {
+  asset_id: string;
+  expires_in: number;
+  signed_url: string;
+}

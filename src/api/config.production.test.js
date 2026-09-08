@@ -90,6 +90,14 @@ describe.each(['web', 'android', 'ios'])('production public configuration (%s)',
     expect(config.getSupabasePublicConfig()).toBeNull();
   });
 
+  it('rejects a partially configured Supabase client', () => {
+    const config = productionConfig(platform, {
+      ...publicValues,
+      EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: undefined,
+    });
+    expect(() => config.getSupabasePublicConfig()).toThrow('must be configured together');
+  });
+
   it('preserves HTTPS validation instead of hiding invalid configuration', () => {
     const config = productionConfig(platform, {
       ...publicValues,

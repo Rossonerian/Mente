@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, status
 from sqlalchemy import select
 
 from ..dependencies import CurrentUser, DbSession, require_patient_access
-from ..models import FamilyMemory
+from ..models import Asset, FamilyMemory
 from ..schemas import MemoryCreate, MemoryRead, MemoryUpdate, MessageResponse
 
 router = APIRouter(prefix="/patients/{patient_id}/memories", tags=["family memories"])
@@ -20,7 +20,9 @@ def list_memories(patient_id: str, user: CurrentUser, db: DbSession, active_only
 @router.post("", response_model=MemoryRead, status_code=status.HTTP_201_CREATED)
 def create_memory(patient_id: str, payload: MemoryCreate, user: CurrentUser, db: DbSession) -> FamilyMemory:
     require_patient_access(db, user.id, patient_id)
-    memory = FamilyMemory(patient_id=patient_id, **payload.model_dump())
+    values = payload.model_dump()
+    _apply_asset_reference(db, patient_id, values)
+    memory = FamilyMemory(patient_id=patient_id, **values)
     db.add(memory)
     db.commit()
     db.refresh(memory)
@@ -38,6 +40,7 @@ def update_memory(
     require_patient_access(db, user.id, patient_id)
     memory = _get_memory(db, patient_id, memory_id)
     updates = payload.model_dump(exclude_unset=True)
+    _apply_asset_reference(db, patient_id, updates)
     resulting_consent = updates.get("consent_recorded_at", memory.consent_recorded_at)
     if resulting_consent is None:
         raise HTTPException(
@@ -65,3 +68,19 @@ def _get_memory(db: DbSession, patient_id: str, memory_id: str) -> FamilyMemory:
     if memory is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Memory not found")
     return memory
+
+
+def _apply_asset_reference(db: DbSession, patient_id: str, values: dict[str, object]) -> None:
+    asset_id = values.get("asset_id")
+    if asset_id is None:
+        return
+    asset = db.scalar(
+        select(Asset).where(
+            Asset.id == asset_id,
+            Asset.patient_id == patient_id,
+            Asset.status == "ACTIVE",
+        )
+    )
+    if asset is None or asset.consent_recorded_at is None:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail="Active consented asset required")
+    values["asset_ref"] = asset.storage_key

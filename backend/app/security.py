@@ -2,7 +2,9 @@ import hashlib
 import json
 import secrets
 from dataclasses import dataclass
+from urllib.error import HTTPError, URLError
 from urllib.parse import urlparse
+from urllib.request import Request, urlopen
 from uuid import UUID
 
 import jwt
@@ -26,20 +28,39 @@ class VerifiedSupabaseClaims:
 class SupabaseTokenVerifier:
     _allowed_algorithms = frozenset({"RS256", "RS384", "RS512", "ES256", "ES384", "ES512", "EdDSA"})
 
-    def __init__(self, supabase_url: str | None, audience: str) -> None:
+    def __init__(
+        self,
+        supabase_url: str | None,
+        audience: str,
+        *,
+        publishable_key: str | None = None,
+        allow_insecure_local: bool = False,
+    ) -> None:
         if not supabase_url:
             raise SupabaseTokenConfigurationError("SUPABASE_URL is not configured")
         parsed = urlparse(supabase_url)
-        if parsed.scheme != "https" or not parsed.netloc:
-            raise SupabaseTokenConfigurationError("SUPABASE_URL must be an HTTPS URL")
-        self.issuer = f"{supabase_url.rstrip('/')}/auth/v1"
+        is_local = parsed.hostname in {"localhost", "127.0.0.1", "::1"}
+        if (parsed.scheme != "https" and not (allow_insecure_local and is_local)) or not parsed.netloc:
+            raise SupabaseTokenConfigurationError("SUPABASE_URL must be HTTPS outside local development")
+        if parsed.path not in {"", "/"} or parsed.query or parsed.fragment:
+            raise SupabaseTokenConfigurationError("SUPABASE_URL must be a project origin without a path")
+        self.issuer = f"{parsed.scheme}://{parsed.netloc}/auth/v1"
         self.audience = audience
-        self._jwks_client = jwt.PyJWKClient(f"{self.issuer}/.well-known/jwks.json", cache_jwk_set=True, lifespan=600)
+        self._publishable_key = publishable_key
+        self._auth_server_fallback_enabled = allow_insecure_local and bool(publishable_key)
+        self._jwks_client = jwt.PyJWKClient(
+            f"{self.issuer}/.well-known/jwks.json",
+            cache_jwk_set=True,
+            lifespan=600,
+            timeout=5,
+        )
 
     def verify(self, token: str) -> VerifiedSupabaseClaims:
         try:
             header = jwt.get_unverified_header(token)
             algorithm = header.get("alg")
+            if algorithm == "HS256" and self._auth_server_fallback_enabled:
+                return self._verify_with_auth_server(token)
             if algorithm not in self._allowed_algorithms:
                 raise SupabaseTokenError("Unsupported token algorithm")
             signing_key = self._jwks_client.get_signing_key_from_jwt(token)
@@ -65,11 +86,47 @@ class SupabaseTokenVerifier:
             subject = str(UUID(subject))
         except ValueError as exc:
             raise SupabaseTokenError("Invalid token subject") from exc
-        if not isinstance(email, str) or not email or len(email) > 320:
-            raise SupabaseTokenError("Token does not include a usable email address")
+        if not isinstance(email, str) or len(email) > 320:
+            email = ""
         if role != "authenticated":
             raise SupabaseTokenError("Token is not an authenticated caregiver session")
         return VerifiedSupabaseClaims(subject=subject, email=email.lower(), role=role)
+
+    def _verify_with_auth_server(self, token: str) -> VerifiedSupabaseClaims:
+        """Local-only fallback for CLI projects that still issue HS256 tokens.
+
+        The Auth `/user` endpoint verifies the token server-side. This path is
+        intentionally disabled for hosted/production configuration; hosted
+        projects must use asymmetric signing keys and the JWKS verifier above.
+        """
+        if not self._publishable_key:
+            raise SupabaseTokenConfigurationError("Local Supabase publishable key is not configured")
+        request = Request(
+            f"{self.issuer}/user",
+            headers={
+                "apikey": self._publishable_key,
+                "Authorization": f"Bearer {token}",
+            },
+            method="GET",
+        )
+        try:
+            with urlopen(request, timeout=5) as response:  # nosec B310
+                body = response.read()
+        except (HTTPError, URLError) as exc:
+            raise SupabaseTokenError("Invalid or expired token") from exc
+        try:
+            payload = json.loads(body.decode("utf-8"))
+        except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+            raise SupabaseTokenError("Invalid Auth server response") from exc
+        subject = payload.get("id")
+        email = payload.get("email", "")
+        if not isinstance(subject, str) or not isinstance(email, str):
+            raise SupabaseTokenError("Invalid Auth user")
+        try:
+            subject = str(UUID(subject))
+        except ValueError as exc:
+            raise SupabaseTokenError("Invalid token subject") from exc
+        return VerifiedSupabaseClaims(subject=subject, email=email.lower(), role="authenticated")
 
 
 def hash_opaque_token(value: str) -> str:

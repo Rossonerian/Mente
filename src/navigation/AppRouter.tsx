@@ -8,7 +8,7 @@ import { CaregiverHistoryScreen } from '../screens/caregiver/CaregiverHistoryScr
 import { CaregiverHomeScreen } from '../screens/caregiver/CaregiverHomeScreen';
 import { CaregiverSettingsScreen } from '../screens/caregiver/CaregiverSettingsScreen';
 import { CaregiverSetupScreen } from '../screens/caregiver/CaregiverSetupScreen';
-import { CaregiverLoadingScreen, CaregiverSignInScreen } from '../screens/caregiver/CaregiverAccessScreen';
+import { CaregiverLoadingScreen, CaregiverProfileSetupScreen, CaregiverRegistrationScreen, CaregiverSignInScreen } from '../screens/caregiver/CaregiverAccessScreen';
 import { PatientCompleteScreen } from '../screens/patient/PatientCompleteScreen';
 import { PatientFamilyScreen } from '../screens/patient/PatientFamilyScreen';
 import { PatientHelpScreen } from '../screens/patient/PatientHelpScreen';
@@ -29,6 +29,7 @@ export function AppRouter() {
   const queryClient = useQueryClient();
   const [role, setRole] = useState<AppRole>('caregiver');
   const [route, setRoute] = useState<AppRoute>(getDefaultRoute('caregiver'));
+  const [showRegistration, setShowRegistration] = useState(false);
   const [patientToken, setPatientToken] = useState<string | null>(null);
   const [patientDeviceLoading, setPatientDeviceLoading] = useState(true);
   const [activeGame, setActiveGame] = useState<{ patientToken: string | null; session: PatientSessionDto; memories: MemoryDto[] } | null>(null);
@@ -55,14 +56,20 @@ export function AppRouter() {
 
   const navigateCaregiver = (nextRoute: CaregiverRoute) => setRoute(nextRoute);
   const navigatePatient = (nextRoute: PatientRoute) => setRoute(nextRoute);
-  const { state: caregiverAuth } = useCaregiverAuth();
+  const { state: caregiverAuth, refreshProfile } = useCaregiverAuth();
 
   if (role === 'caregiver') {
     if (!isDevelopmentMockMode && caregiverAuth.kind === 'loading') {
       return <AppShell role="caregiver" tabs={caregiverTabs} activeRoute="home" onNavigate={() => undefined} onSwitchRole={switchRole} showTabs={false} showPreviewBar={false}><CaregiverLoadingScreen /></AppShell>;
     }
     if (!isDevelopmentMockMode && caregiverAuth.kind === 'signed-out') {
-      return <AppShell role="caregiver" tabs={caregiverTabs} activeRoute="home" onNavigate={() => undefined} onSwitchRole={switchRole} showTabs={false} showPreviewBar={false}><CaregiverSignInScreen configured={caregiverAuth.configured} /></AppShell>;
+      return <AppShell role="caregiver" tabs={caregiverTabs} activeRoute="home" onNavigate={() => undefined} onSwitchRole={switchRole} showTabs={false} showPreviewBar={false}>{showRegistration ? <CaregiverRegistrationScreen configured={caregiverAuth.configured} onBack={() => setShowRegistration(false)} /> : <CaregiverSignInScreen configured={caregiverAuth.configured} onRegister={() => setShowRegistration(true)} />}</AppShell>;
+    }
+    if (!isDevelopmentMockMode && caregiverAuth.kind === 'signed-in' && caregiverAuth.profileStatus === 'checking') {
+      return <AppShell role="caregiver" tabs={caregiverTabs} activeRoute="home" onNavigate={() => undefined} onSwitchRole={switchRole} showTabs={false} showPreviewBar={false}><CaregiverLoadingScreen /></AppShell>;
+    }
+    if (!isDevelopmentMockMode && caregiverAuth.kind === 'signed-in' && caregiverAuth.profileStatus === 'missing') {
+      return <AppShell role="caregiver" tabs={caregiverTabs} activeRoute="home" onNavigate={() => undefined} onSwitchRole={switchRole} showTabs={false} showPreviewBar={false}><CaregiverProfileSetupScreen accessToken={caregiverAuth.accessToken} onComplete={() => { void refreshProfile(); }} /></AppShell>;
     }
     const showTabs = isCaregiverTabRoute(route);
     return (

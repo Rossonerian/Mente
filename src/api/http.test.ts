@@ -36,4 +36,23 @@ describe('createHttpClient', () => {
       message: 'Your session has ended. Please sign in again.',
     });
   });
+
+  it('refreshes once after a 401 and never loops', async () => {
+    const fetchMock = jest.fn()
+      .mockResolvedValueOnce({ ok: false, status: 401, json: async () => ({ detail: 'expired' }) })
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ ok: true }) });
+    const refreshAccessToken = jest.fn().mockResolvedValue('refreshed-token');
+    const client = createHttpClient({
+      baseUrl: 'https://api.example.test/v1',
+      getHeaders: (override) => ({ Authorization: `Bearer ${override ?? 'old-token'}` }),
+      refreshAccessToken,
+      fetchImpl: fetchMock,
+    });
+
+    await expect(client.get('/auth/me')).resolves.toEqual({ ok: true });
+    expect(refreshAccessToken).toHaveBeenCalledTimes(1);
+    expect(fetchMock).toHaveBeenNthCalledWith(2, 'https://api.example.test/v1/auth/me', expect.objectContaining({
+      headers: expect.objectContaining({ Authorization: 'Bearer refreshed-token' }),
+    }));
+  });
 });

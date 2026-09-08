@@ -1,9 +1,9 @@
-import * as SecureStore from 'expo-secure-store';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export const caregiverSessionStorage = {
-  getItem: (key: string) => SecureStore.getItemAsync(key),
-  removeItem: (key: string) => SecureStore.deleteItemAsync(key),
-  setItem: (key: string, value: string) => SecureStore.setItemAsync(key, value),
+  getItem: (key: string) => AsyncStorage.getItem(key),
+  removeItem: (key: string) => AsyncStorage.removeItem(key),
+  setItem: (key: string, value: string) => AsyncStorage.setItem(key, value),
 };
 
-export const caregiverSessionStorageSecurity = 'native-secure-store' as const;
+export const caregiverSessionStorageSecurity = 'native-async-storage' as const;

@@ -9,6 +9,7 @@ export interface MemoryDto {
   prompt_text: string;
   accepted_answers: string[];
   asset_ref: string | null;
+  asset_id?: string | null;
   active: boolean;
   consent_recorded_at: string;
   created_at: string;

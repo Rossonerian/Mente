@@ -10,6 +10,11 @@ router = APIRouter(prefix="/auth", tags=["authentication"])
 
 @router.post("/profile", response_model=UserRead, status_code=status.HTTP_201_CREATED)
 def create_profile(payload: CaregiverProfileCreate, claims: VerifiedCaregiver, db: DbSession) -> User:
+    if not claims.email:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail="Supabase Auth did not provide an email for profile creation",
+        )
     existing_profile = db.query(User).filter(User.auth_user_id == claims.subject).one_or_none()
     if existing_profile is not None:
         return existing_profile

@@ -13,8 +13,9 @@ from starlette.responses import Response
 from .config import Settings, get_settings
 from .database import Base, create_database_engine, create_session_factory
 from .rate_limit import FixedWindowRateLimiter
-from .routers import alerts, auth, devices, families, integrations, memories, patients, sessions, settings
+from .routers import alerts, assets, auth, devices, families, integrations, memories, patients, sessions, settings
 from .security import SupabaseTokenConfigurationError, SupabaseTokenVerifier
+from .services.storage import SupabaseStorageAdapter
 
 
 class _UnavailableSupabaseTokenVerifier:
@@ -31,6 +32,7 @@ def create_app(settings_override: Settings | None = None) -> FastAPI:
         pool_timeout=settings_value.db_pool_timeout_seconds,
         connect_timeout=settings_value.db_connect_timeout_seconds,
         statement_timeout_ms=settings_value.db_statement_timeout_ms,
+        pool_recycle=settings_value.db_pool_recycle_seconds,
     )
     session_factory = create_session_factory(engine)
 
@@ -54,9 +56,16 @@ def create_app(settings_override: Settings | None = None) -> FastAPI:
     app.state.engine = engine
     app.state.session_factory = session_factory
     app.state.rate_limiter = FixedWindowRateLimiter()
+    app.state.storage_adapter = SupabaseStorageAdapter(
+        settings_value.supabase_url,
+        settings_value.supabase_service_role_key,
+        settings_value.supabase_storage_bucket,
+    )
     app.state.caregiver_token_verifier = SupabaseTokenVerifier(
         settings_value.supabase_url,
         settings_value.supabase_jwt_audience,
+        publishable_key=settings_value.supabase_publishable_key,
+        allow_insecure_local=settings_value.environment in {"development", "test"},
     ) if settings_value.supabase_url else _UnavailableSupabaseTokenVerifier()
 
     app.add_middleware(
@@ -80,6 +89,7 @@ def create_app(settings_override: Settings | None = None) -> FastAPI:
     app.include_router(families.router, prefix=prefix)
     app.include_router(patients.router, prefix=prefix)
     app.include_router(memories.router, prefix=prefix)
+    app.include_router(assets.router, prefix=prefix)
     app.include_router(settings.router, prefix=prefix)
     app.include_router(devices.caregiver_router, prefix=prefix)
     app.include_router(devices.device_management_router, prefix=prefix)

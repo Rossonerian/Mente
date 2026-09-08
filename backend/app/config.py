@@ -1,5 +1,6 @@
 from functools import lru_cache
 from typing import Literal, Self
+from urllib.parse import urlparse
 
 from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -12,15 +13,22 @@ class Settings(BaseSettings):
     environment: Literal["development", "test", "production"] = "development"
     api_prefix: str = "/v1"
     database_url: str = "sqlite:///./mente.db"
+    migration_database_url: str | None = None
     auto_create_tables: bool = False
     db_pool_size: int = Field(default=5, ge=1, le=50)
     db_max_overflow: int = Field(default=5, ge=0, le=50)
     db_pool_timeout_seconds: int = Field(default=10, ge=1, le=120)
     db_connect_timeout_seconds: int = Field(default=10, ge=1, le=120)
     db_statement_timeout_ms: int = Field(default=15_000, ge=1_000, le=300_000)
+    db_pool_recycle_seconds: int = Field(default=1_800, ge=60, le=86_400)
 
     supabase_url: str | None = None
+    supabase_publishable_key: str | None = None
+    supabase_service_role_key: str | None = None
     supabase_jwt_audience: str = Field(default="authenticated", min_length=1, max_length=128)
+    supabase_storage_bucket: str = Field(default="family-memory-assets", min_length=1, max_length=63)
+    storage_signed_url_seconds: int = Field(default=300, ge=30, le=3_600)
+    storage_max_file_size_bytes: int = Field(default=10 * 1024 * 1024, ge=1_024, le=50 * 1024 * 1024)
 
     call_bot_api_key: str = Field(default="change-me-call-bot-key-32-characters", min_length=32)
     cors_origins: str = "http://localhost:19006,http://localhost:8081,http://localhost:3000"
@@ -47,12 +55,22 @@ class Settings(BaseSettings):
                 raise ValueError("Production cannot configure a development admin code")
             if not self.supabase_url:
                 raise ValueError("Production requires SUPABASE_URL for caregiver token validation")
+            if not _is_https_supabase_url(self.supabase_url):
+                raise ValueError("Production requires an HTTPS SUPABASE_URL")
+            if _is_placeholder_secret(self.supabase_publishable_key):
+                raise ValueError("Production requires a non-placeholder SUPABASE_PUBLISHABLE_KEY value")
+            if _is_placeholder_secret(self.supabase_service_role_key):
+                raise ValueError("Production requires a non-placeholder SUPABASE_SERVICE_ROLE_KEY value")
             if _is_placeholder_secret(self.call_bot_api_key):
                 raise ValueError("Production requires a non-default CALL_BOT_API_KEY value")
             if self.auto_create_tables:
                 raise ValueError("Production must use Alembic migrations instead of AUTO_CREATE_TABLES")
-            if not self.database_url.startswith(("postgresql://", "postgresql+")):
-                raise ValueError("Production requires a PostgreSQL database")
+            if not self.database_url.startswith("postgresql+psycopg://"):
+                raise ValueError("Production requires a PostgreSQL database using postgresql+psycopg")
+            if _hosted_database_without_tls(self.database_url):
+                raise ValueError("Production hosted PostgreSQL URLs must require TLS with sslmode=require")
+            if self.migration_database_url and _hosted_database_without_tls(self.migration_database_url):
+                raise ValueError("MIGRATION_DATABASE_URL must require TLS for hosted PostgreSQL")
             if not self.cors_origin_list or any(
                 origin == "*" or not origin.startswith("https://") for origin in self.cors_origin_list
             ):
@@ -67,5 +85,20 @@ def get_settings() -> Settings:
     return Settings()
 
 
-def _is_placeholder_secret(value: str) -> bool:
-    return value.startswith(("change-me-", "replace-with-"))
+def _is_placeholder_secret(value: str | None) -> bool:
+    return not value or value.startswith(("change-me-", "replace-with-", "your-", "<"))
+
+
+def _is_https_supabase_url(value: str) -> bool:
+    parsed = urlparse(value)
+    return parsed.scheme == "https" and bool(parsed.netloc) and not parsed.query and not parsed.fragment
+
+
+def _hosted_database_without_tls(value: str) -> bool:
+    parsed = urlparse(value)
+    host = (parsed.hostname or "").lower()
+    return (
+        parsed.scheme.startswith("postgresql")
+        and host not in {"localhost", "127.0.0.1", "::1"}
+        and "sslmode=" not in parsed.query
+    )

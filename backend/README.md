@@ -16,10 +16,13 @@ cp .env.example .env
 .venv/bin/uvicorn app.main:app --reload
 ```
 
-Use only synthetic local data. `GET /health` verifies liveness and `GET /ready` verifies the configured database
-connection without returning internals. The generated local OpenAPI contract is available at `/docs`. The
-container's default command runs only the API; execute `alembic upgrade head` as a separate release step with a
-migration credential before starting or rolling out the runtime.
+For the complete local Supabase/Auth/Postgres/Storage flow, including PowerShell
+commands, use [`docs/SUPABASE_SETUP.md`](../docs/SUPABASE_SETUP.md). Use only
+synthetic local data. `GET /health` verifies liveness and `GET /ready` verifies
+the configured database connection without returning internals. The generated
+local OpenAPI contract is available at `/docs`. The container's default command
+runs only the API; execute `alembic upgrade head` as a separate release step
+with a migration credential before starting or rolling out the runtime.
 
 ## Repeatable local patient connection
 
@@ -42,8 +45,9 @@ startup. It does not sign in caregivers, grant caregiver permissions, or replace
 - Caregiver requests use `Authorization: Bearer <Supabase access token>`. `SupabaseTokenVerifier` verifies a
   signed asymmetric token through the project JWKS, allows only approved asymmetric algorithms, and requires issuer,
   audience, expiry, subject, and `authenticated` role. JWKS entries are cached for 10 minutes to support key rotation.
-- The configured Supabase project must use asymmetric signing keys. Legacy shared-secret JWT projects are a setup
-  blocker for this verifier; do not bypass signature validation.
+- Hosted projects must use asymmetric signing keys. The local CLI's legacy
+  shared-secret token is accepted only in development through Supabase Auth's
+  `/user` verification endpoint; production has no shared-secret fallback.
 - The API resolves family and patient membership server-side. A route parameter is never authorization by itself.
 - Patient device credentials are sent only in `X-Patient-Token`, are hashed at rest, expire, and are checked for
   revocation on every protected patient request. Native apps use SecureStore; the web app intentionally keeps the
@@ -53,15 +57,20 @@ startup. It does not sign in caregivers, grant caregiver permissions, or replace
 
 ## Migrations and deployment boundary
 
-Alembic is the only schema-migration authority in this repository. Use `alembic upgrade head` against a disposable
-local database before deploying. Runtime database users need only the application privileges; migration credentials
-must be separate. Production requires PostgreSQL, bounded database pools/timeouts including a statement timeout, HTTPS behind a trusted proxy,
-explicit HTTPS CORS origins, external rate limiting for multi-worker deployments, and redacted structured logs.
+Alembic is the only application-schema migration authority in this repository.
+Migrations through `d1a4c7f6b9e2` add the asset metadata/RLS/grant posture,
+private bucket bootstrap, and native Supabase Auth UUID mapping.
+The FastAPI Storage adapter holds the
+service key server-side, generates opaque paths, requires consent, and issues
+short-lived signed URLs after family authorization. Direct Data API domain
+access is denied to `anon` and `authenticated` roles.
 
-This repository does not contain Supabase CLI configuration, remote credentials, storage bucket policies, or remote
-RLS migrations. Private-media buckets, signed URL lifetimes, backup/restore, consent/retention, hosting region,
-domain, SMTP, redirect allowlists, and production observability remain explicit release decisions rather than implied
-by local tests. See [`docs/operations.md`](../docs/operations.md).
+Runtime database users need only application privileges; migration credentials
+must be separate. Production requires PostgreSQL with TLS, bounded database
+pools/timeouts including a statement timeout, explicit HTTPS CORS origins,
+external rate limiting for multi-worker deployments, and redacted structured
+logs. See [`docs/SUPABASE_SETUP.md`](../docs/SUPABASE_SETUP.md) for the hosted
+owner-only steps.
 
 ## Verification
 

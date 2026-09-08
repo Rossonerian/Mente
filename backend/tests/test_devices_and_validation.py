@@ -190,17 +190,32 @@ def test_production_configuration_rejects_development_defaults() -> None:
         environment="production",
         database_url="postgresql+psycopg://user:password@localhost/mente",
         supabase_url="https://mente-test.supabase.co",
+        supabase_publishable_key="test-publishable-key",
+        supabase_service_role_key="test-service-role-key",
         call_bot_api_key="production-callbot-key-with-at-least-32-characters",
         cors_origins="https://app.example.com",
     )
     assert production.auto_create_tables is False
     assert production.environment == "production"
 
+    with pytest.raises(ValidationError, match="TLS"):
+        Settings(
+            environment="production",
+            database_url="postgresql+psycopg://user:password@db.example.test/mente",
+            supabase_url="https://mente-test.supabase.co",
+            supabase_publishable_key="test-publishable-key",
+            supabase_service_role_key="test-service-role-key",
+            call_bot_api_key="production-callbot-key-with-at-least-32-characters",
+            cors_origins="https://app.example.com",
+        )
+
     with pytest.raises(ValidationError, match="PostgreSQL"):
         Settings(
             environment="production",
             database_url="sqlite:///./mente.db",
             supabase_url="https://mente-test.supabase.co",
+            supabase_publishable_key="test-publishable-key",
+            supabase_service_role_key="test-service-role-key",
             call_bot_api_key="production-callbot-key-with-at-least-32-characters",
             cors_origins="https://app.example.com",
         )

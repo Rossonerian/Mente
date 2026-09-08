@@ -8,7 +8,7 @@ import { ScreenScroll } from '../../components/Screen';
 import { useCaregiverAuth } from '../../auth/CaregiverAuthContext';
 import { caregiverTheme, spacing } from '../../theme/tokens';
 
-export function CaregiverSignInScreen({ configured }: { configured: boolean }) {
+export function CaregiverSignInScreen({ configured, onRegister }: { configured: boolean; onRegister: () => void }) {
   const { signIn } = useCaregiverAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -35,6 +35,7 @@ export function CaregiverSignInScreen({ configured }: { configured: boolean }) {
             <TextInput accessibilityLabel="Caregiver password" autoComplete="current-password" onChangeText={setPassword} secureTextEntry style={styles.input} value={password} />
             {error ? <Text accessibilityLiveRegion="polite" style={styles.error}>{error}</Text> : null}
             <MenteButton label={submitting ? 'Signing in…' : 'Sign in'} onPress={() => void submit()} theme="caregiver" disabled={submitting || !email || !password} />
+            <MenteButton label="Create a caregiver account" onPress={onRegister} theme="caregiver" variant="secondary" disabled={submitting} />
           </>
         ) : (
           <>
@@ -42,6 +43,44 @@ export function CaregiverSignInScreen({ configured }: { configured: boolean }) {
             <Text style={styles.body}>Add the public Supabase URL, publishable key, and Mente API base URL to this build. No caregiver data is shown until that configuration is available.</Text>
           </>
         )}
+      </SurfaceCard>
+    </ScreenScroll>
+  );
+}
+
+export function CaregiverRegistrationScreen({ configured, onBack }: { configured: boolean; onBack: () => void }) {
+  const { signUp } = useCaregiverAuth();
+  const [displayName, setDisplayName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [message, setMessage] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  const submit = async () => {
+    setSubmitting(true);
+    setMessage(null);
+    const result = await signUp(email, password, displayName);
+    setSubmitting(false);
+    if (result.message) setMessage(result.message);
+  };
+
+  return (
+    <ScreenScroll theme="caregiver">
+      <PageHeader eyebrow="Caregiver registration" title="Create your Mente account" subtitle="Supabase securely manages your caregiver sign-in and session." theme="caregiver" />
+      <SurfaceCard theme="caregiver" style={styles.card}>
+        {configured ? (
+          <>
+            <Text style={styles.label}>Name to show your family</Text>
+            <TextInput accessibilityLabel="Caregiver display name" autoComplete="name" onChangeText={setDisplayName} style={styles.input} value={displayName} />
+            <Text style={styles.label}>Email</Text>
+            <TextInput accessibilityLabel="Registration email" autoCapitalize="none" autoComplete="email" keyboardType="email-address" onChangeText={setEmail} style={styles.input} value={email} />
+            <Text style={styles.label}>Password</Text>
+            <TextInput accessibilityLabel="Registration password" autoComplete="new-password" onChangeText={setPassword} secureTextEntry style={styles.input} value={password} />
+            {message ? <Text accessibilityLiveRegion="polite" style={styles.body}>{message}</Text> : null}
+            <MenteButton label={submitting ? 'Creating…' : 'Create account'} onPress={() => void submit()} theme="caregiver" disabled={submitting || !displayName.trim() || !email || password.length < 8} />
+            <MenteButton label="Back to sign in" onPress={onBack} theme="caregiver" variant="secondary" disabled={submitting} />
+          </>
+        ) : <Text style={styles.body}>Live caregiver access is not configured on this build.</Text>}
       </SurfaceCard>
     </ScreenScroll>
   );
