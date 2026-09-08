@@ -7,18 +7,26 @@ import { MenteIcon } from './Icon';
 
 export function MemberCard({ member, theme = 'caregiver' }: { member: FamilyMember; theme?: ThemeName }) {
   const tokens = theme === 'caregiver' ? caregiverTheme : patientTheme;
+  const accessibleLabel = `${member.name}, ${member.relationship}. ${member.memory}${
+    member.voiceAvailable ? '. Voice note available' : ''
+  }`;
 
   return (
-    <View accessible accessibilityRole="text" accessibilityLabel={`${member.name}, ${member.relationship}. ${member.memory}`} style={styles.row}>
+    <View accessible accessibilityRole="text" accessibilityLabel={accessibleLabel} style={styles.row}>
       <Avatar initials={member.initials} name={member.name} accessible={false} theme={theme} tone={theme === 'patient' ? 'warm' : 'primary'} />
       <View style={styles.copy}>
         <Text style={[styles.name, { color: tokens.colors.text }]}>{member.name}</Text>
         <Text style={[styles.relationship, { color: tokens.colors.primary }]}>{member.relationship}</Text>
         <Text style={[styles.memory, { color: tokens.colors.textMuted }]}>{member.memory}</Text>
       </View>
-      {member.voiceAvailable ? <View style={[styles.voice, { backgroundColor: theme === 'caregiver' ? tokens.colors.surfaceMuted : patientTheme.colors.coralSoft }]}>
-        <MenteIcon name="volume-medium-outline" size={17} color={tokens.colors.primary} />
-      </View> : null}
+      {member.voiceAvailable ? (
+        <View
+          accessibilityLabel="Voice note available"
+          style={[styles.voice, { backgroundColor: theme === 'caregiver' ? tokens.colors.surfaceMuted : patientTheme.colors.coralSoft }]}
+        >
+          <MenteIcon name="volume-medium-outline" size={17} color={tokens.colors.primary} />
+        </View>
+      ) : null}
     </View>
   );
 }
