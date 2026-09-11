@@ -7,7 +7,7 @@ import { PageHeader } from '../../components/PageHeader';
 import { ScreenScroll } from '../../components/Screen';
 import { SectionHeader } from '../../components/SectionHeader';
 import { menteMockData } from '../../data/mockData';
-import { patientTheme, spacing } from '../../theme/tokens';
+import { patientTheme, spacing } from '../../theme/tokens-enhanced';
 import type { PatientRoute } from '../../types';
 import { GlassSurface } from '../../components/glass/GlassSurface';
 import { adaptMemoryToFamilyMember } from '../../api/adapters/caregiverFamily';

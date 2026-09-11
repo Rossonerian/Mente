@@ -2,7 +2,7 @@ import { StyleSheet, View } from 'react-native';
 import { GlassLayers } from './GlassLayers';
 import type { GlassSurfaceProps } from './GlassSurface.types';
 import { getGlassVisualTokens } from './GlassSurface.tokens';
-import { caregiverTheme, patientTheme } from '../../theme/tokens';
+import { caregiverTheme, patientTheme } from '../../theme/tokens-enhanced';
 
 export function GlassSurface({
   children,

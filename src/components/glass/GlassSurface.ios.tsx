@@ -6,7 +6,7 @@ import {
   isGlassEffectAPIAvailable,
   isLiquidGlassAvailable,
 } from 'expo-glass-effect';
-import { caregiverTheme, patientTheme } from '../../theme/tokens';
+import { caregiverTheme, patientTheme } from '../../theme/tokens-enhanced';
 import { GlassLayers } from './GlassLayers';
 import { getIosGlassStyle } from './GlassSurface.policy';
 import { getGlassVisualTokens } from './GlassSurface.tokens';

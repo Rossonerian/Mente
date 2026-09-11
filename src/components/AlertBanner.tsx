@@ -1,6 +1,6 @@
 import type { JSX, ReactNode } from 'react';
 import { StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
-import { caregiverTheme, patientTheme, spacing } from '../theme/tokens';
+import { caregiverTheme, patientTheme, spacing } from '../theme/tokens-enhanced';
 import { MenteIcon } from './Icon';
 import type { ThemeName } from './Card';
 

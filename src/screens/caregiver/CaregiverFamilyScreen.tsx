@@ -8,7 +8,7 @@ import { MemberCard } from '../../components/MemberCard';
 import { PageHeader } from '../../components/PageHeader';
 import { ScreenScroll } from '../../components/Screen';
 import { SectionHeader } from '../../components/SectionHeader';
-import { caregiverTheme, spacing } from '../../theme/tokens';
+import { caregiverTheme, spacing } from '../../theme/tokens-enhanced';
 import { menteMockData } from '../../data/mockData';
 import { GlassSurface } from '../../components/glass/GlassSurface';
 import { useCaregiverPatientContext } from '../../features/caregiver/useCaregiverContext';
@@ -115,8 +115,8 @@ function FamilyContent({ onOpenSetup, family, patientName, live, developmentAcce
 
       {editPreview ? (
         <SoftPanel theme="caregiver" style={styles.editNotice}>
-            <Text style={styles.editNoticeTitle}>{live ? 'Family memory management' : 'Preview-only controls'}</Text>
-            <Text style={styles.editNoticeBody}>{live ? 'This view reflects saved, consented memories. Add or revise details through the caregiver management flow.' : 'A connected family editor belongs to the future management surface. Nothing is saved from this preview.'}</Text>
+          <Text style={styles.editNoticeTitle}>{live ? 'Family memory management' : 'Preview-only controls'}</Text>
+          <Text style={styles.editNoticeBody}>{live ? 'This view reflects saved, consented memories. Add or revise details through the caregiver management flow.' : 'A connected family editor belongs to the future management surface. Nothing is saved from this preview.'}</Text>
         </SoftPanel>
       ) : null}
       <MenteButton

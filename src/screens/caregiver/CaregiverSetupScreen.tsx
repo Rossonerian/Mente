@@ -13,7 +13,7 @@ import { SurfaceCard, SoftPanel } from '../../components/Card';
 import { MenteIcon } from '../../components/Icon';
 import { PageHeader } from '../../components/PageHeader';
 import { ScreenScroll } from '../../components/Screen';
-import { caregiverTheme, spacing } from '../../theme/tokens';
+import { caregiverTheme, spacing } from '../../theme/tokens-enhanced';
 import { toSetupFormField } from '../../features/caregiver/setup/formFields';
 
 const setupSchema = z.object({

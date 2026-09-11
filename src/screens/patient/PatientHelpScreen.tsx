@@ -4,7 +4,7 @@ import { SurfaceCard, SoftPanel } from '../../components/Card';
 import { MenteIcon } from '../../components/Icon';
 import { PageHeader } from '../../components/PageHeader';
 import { ScreenScroll } from '../../components/Screen';
-import { patientTheme, spacing } from '../../theme/tokens';
+import { patientTheme, spacing } from '../../theme/tokens-enhanced';
 import type { PatientRoute } from '../../types';
 
 export function PatientHelpScreen({ onNavigate }: { onNavigate: (route: PatientRoute) => void }) {

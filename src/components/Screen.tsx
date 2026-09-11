@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { Platform, ScrollView, StyleSheet, View, useWindowDimensions, type StyleProp, type ViewStyle } from 'react-native';
 import type { ThemeName } from './Card';
-import { spacing } from '../theme/tokens';
+import { spacing } from '../theme/tokens-enhanced';
 import { getResponsiveLayout } from '../theme/responsive';
 
 export function ScreenScroll({

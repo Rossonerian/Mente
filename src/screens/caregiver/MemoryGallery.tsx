@@ -4,7 +4,7 @@ import { ScreenScroll } from '../../components/Screen';
 import { SurfaceCard } from '../../components/Card';
 import { Badge } from '../../components/Badge';
 import { MenteButton } from '../../components/Button';
-import { caregiverTheme, spacing } from '../../theme/tokens';
+import { caregiverTheme, spacing } from '../../theme/tokens-enhanced';
 import type { CaregiverRoute } from '../../types';
 
 interface Memory {

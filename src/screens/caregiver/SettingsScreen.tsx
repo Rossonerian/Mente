@@ -3,7 +3,7 @@ import { PageHeader } from '../../components/PageHeader';
 import { ScreenScroll } from '../../components/Screen';
 import { SurfaceCard } from '../../components/Card';
 import { MenteButton, TextButton } from '../../components/Button';
-import { caregiverTheme, spacing } from '../../theme/tokens';
+import { caregiverTheme, spacing } from '../../theme/tokens-enhanced';
 import { useState } from 'react';
 import type { CaregiverRoute } from '../../types';
 

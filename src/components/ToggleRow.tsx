@@ -1,5 +1,5 @@
 import { StyleSheet, Text, View } from 'react-native';
-import { caregiverTheme, spacing } from '../theme/tokens';
+import { caregiverTheme, spacing } from '../theme/tokens-enhanced';
 import { FocusablePressable, type FocusableKeyboardEvent } from './FocusablePressable';
 
 export function ToggleRow({

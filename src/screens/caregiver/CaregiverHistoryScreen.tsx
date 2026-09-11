@@ -8,7 +8,7 @@ import { PageHeader } from '../../components/PageHeader';
 import { ScreenScroll } from '../../components/Screen';
 import { SectionHeader } from '../../components/SectionHeader';
 import { StatusPill } from '../../components/StatusPill';
-import { caregiverTheme, spacing } from '../../theme/tokens';
+import { caregiverTheme, spacing } from '../../theme/tokens-enhanced';
 import type { CognitiveSession, SessionSource, TrendAssessment } from '../../types';
 import { useCaregiverPatientContext } from '../../features/caregiver/useCaregiverContext';
 import { useQuery } from '@tanstack/react-query';

@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { caregiverTheme, patientTheme } from '../theme/tokens';
+import { caregiverTheme, patientTheme } from '../theme/tokens-enhanced';
 import type { AppRole, TabItem } from '../types';
 import { BottomTabBar } from './BottomTabBar';
 import { GlassBackdrop } from './glass/GlassBackdrop';

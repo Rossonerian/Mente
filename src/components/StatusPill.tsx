@@ -1,5 +1,5 @@
 import { StyleSheet, Text, View } from 'react-native';
-import { caregiverTheme, getTrendColors, spacing } from '../theme/tokens';
+import { caregiverTheme, getTrendColors, spacing } from '../theme/tokens-enhanced';
 import type { SessionReview, TrendStatus } from '../types';
 
 type PillStatus = TrendStatus | SessionReview;

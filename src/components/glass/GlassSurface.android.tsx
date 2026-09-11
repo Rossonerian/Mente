@@ -1,6 +1,6 @@
 import { Platform, StyleSheet, View } from 'react-native';
 import { BlurView } from 'expo-blur';
-import { caregiverTheme, patientTheme } from '../../theme/tokens';
+import { caregiverTheme, patientTheme } from '../../theme/tokens-enhanced';
 import { useGlassBackdropTarget } from './GlassBackdropContext';
 import { GlassLayers } from './GlassLayers';
 import { getAndroidGlassBehavior } from './GlassSurface.policy';

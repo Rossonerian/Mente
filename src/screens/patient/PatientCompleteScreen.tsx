@@ -3,7 +3,7 @@ import { MenteButton } from '../../components/Button';
 import { SoftPanel } from '../../components/Card';
 import { MenteIcon } from '../../components/Icon';
 import { ScreenScroll } from '../../components/Screen';
-import { patientTheme, spacing } from '../../theme/tokens';
+import { patientTheme, spacing } from '../../theme/tokens-enhanced';
 import { GlassSurface } from '../../components/glass/GlassSurface';
 
 export function PatientCompleteScreen({ onReturnToPlay, onFamily, familyNames = [] }: { onReturnToPlay: () => void; onFamily: () => void; familyNames?: string[] }) {

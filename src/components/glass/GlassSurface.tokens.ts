@@ -1,4 +1,4 @@
-import { caregiverTheme, patientTheme } from '../../theme/tokens';
+import { caregiverTheme, patientTheme } from '../../theme/tokens-enhanced';
 import type { GlassTheme, GlassVariant } from './GlassSurface.types';
 
 export const glassPalettes = {

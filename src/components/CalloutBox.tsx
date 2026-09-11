@@ -1,6 +1,6 @@
 import type { JSX, ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { caregiverTheme, spacing } from '../theme/tokens';
+import { caregiverTheme, spacing } from '../theme/tokens-enhanced';
 import { SoftPanel } from './Card';
 import type { ThemeName } from './Card';
 

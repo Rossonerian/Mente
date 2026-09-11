@@ -1,5 +1,5 @@
 import { StyleSheet, Text, View } from 'react-native';
-import { caregiverTheme, patientTheme, spacing } from '../theme/tokens';
+import { caregiverTheme, patientTheme, spacing } from '../theme/tokens-enhanced';
 import type { AppRole } from '../types';
 import type { ThemeName } from './Card';
 import { MenteIcon } from './Icon';

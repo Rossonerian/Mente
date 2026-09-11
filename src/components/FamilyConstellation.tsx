@@ -1,5 +1,5 @@
 import { StyleSheet, View } from 'react-native';
-import { caregiverTheme, patientTheme } from '../theme/tokens';
+import { caregiverTheme, patientTheme } from '../theme/tokens-enhanced';
 import type { ThemeName } from './Card';
 
 export function FamilyConstellation({ theme = 'caregiver' }: { theme?: ThemeName }) {

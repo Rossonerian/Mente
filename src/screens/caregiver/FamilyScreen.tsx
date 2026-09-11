@@ -5,7 +5,7 @@ import { SurfaceCard } from '../../components/Card';
 import { Avatar } from '../../components/Avatar';
 import { Badge } from '../../components/Badge';
 import { MenteButton } from '../../components/Button';
-import { caregiverTheme, spacing } from '../../theme/tokens';
+import { caregiverTheme, spacing } from '../../theme/tokens-enhanced';
 import { menteMockData } from '../../data/mockData';
 import type { CaregiverRoute } from '../../types';
 

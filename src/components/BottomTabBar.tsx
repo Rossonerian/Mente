@@ -1,6 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { caregiverTheme, patientTheme, spacing } from '../theme/tokens';
+import { caregiverTheme, patientTheme, spacing } from '../theme/tokens-enhanced';
 import type { AppRole, TabItem } from '../types';
 import { MenteIcon } from './Icon';
 import { FocusablePressable } from './FocusablePressable';

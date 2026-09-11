@@ -6,7 +6,7 @@ import { MenteIcon } from '../../components/Icon';
 import { ScreenScroll } from '../../components/Screen';
 import { menteMockData } from '../../data/mockData';
 import { getNextPromptIndex } from '../../navigation/interaction';
-import { patientTheme, spacing } from '../../theme/tokens';
+import { patientTheme, spacing } from '../../theme/tokens-enhanced';
 import { GlassSurface } from '../../components/glass/GlassSurface';
 import { adaptPatientMemoryToPrompt } from '../../api/adapters/caregiverFamily';
 import { isDevelopmentMockMode } from '../../api/config';

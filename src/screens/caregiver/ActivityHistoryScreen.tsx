@@ -4,7 +4,7 @@ import { ScreenScroll } from '../../components/Screen';
 import { ActivityCard } from '../../components/ActivityCard';
 import { ActivityRow } from '../../components/ActivityRow';
 import { MenteButton } from '../../components/Button';
-import { caregiverTheme, spacing } from '../../theme/tokens';
+import { caregiverTheme, spacing } from '../../theme/tokens-enhanced';
 import { menteMockData } from '../../data/mockData';
 import type { CaregiverRoute } from '../../types';
 

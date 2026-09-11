@@ -7,7 +7,7 @@ import { MenteButton } from '../../components/Button';
 import { SurfaceCard, SoftPanel } from '../../components/Card';
 import { PageHeader } from '../../components/PageHeader';
 import { ScreenScroll } from '../../components/Screen';
-import { patientTheme, spacing } from '../../theme/tokens';
+import { patientTheme, spacing } from '../../theme/tokens-enhanced';
 
 export function PatientDeviceAccessScreen({ onBound }: { onBound: () => void }) {
   const [code, setCode] = useState('');

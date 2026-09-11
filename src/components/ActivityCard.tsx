@@ -1,6 +1,6 @@
 import type { JSX, ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { spacing } from '../theme/tokens';
+import { spacing } from '../theme/tokens-enhanced';
 import { SurfaceCard, Hairline } from './Card';
 import type { ThemeName } from './Card';
 

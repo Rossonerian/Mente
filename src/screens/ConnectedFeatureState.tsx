@@ -2,7 +2,7 @@ import { StyleSheet, Text } from 'react-native';
 import { SurfaceCard } from '../components/Card';
 import { PageHeader } from '../components/PageHeader';
 import { ScreenScroll } from '../components/Screen';
-import { caregiverTheme, patientTheme, spacing } from '../theme/tokens';
+import { caregiverTheme, patientTheme, spacing } from '../theme/tokens-enhanced';
 import type { AppRole } from '../types';
 
 export function ConnectedFeatureState({ role, title, body }: { role: AppRole; title: string; body: string }) {

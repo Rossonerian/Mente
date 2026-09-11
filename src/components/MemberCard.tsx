@@ -1,5 +1,5 @@
 import { StyleSheet, Text, View } from 'react-native';
-import { caregiverTheme, patientTheme, spacing } from '../theme/tokens';
+import { caregiverTheme, patientTheme, spacing } from '../theme/tokens-enhanced';
 import type { FamilyMember } from '../types';
 import type { ThemeName } from './Card';
 import { Avatar } from './Avatar';
@@ -7,9 +7,8 @@ import { MenteIcon } from './Icon';
 
 export function MemberCard({ member, theme = 'caregiver' }: { member: FamilyMember; theme?: ThemeName }) {
   const tokens = theme === 'caregiver' ? caregiverTheme : patientTheme;
-  const accessibleLabel = `${member.name}, ${member.relationship}. ${member.memory}${
-    member.voiceAvailable ? '. Voice note available' : ''
-  }`;
+  const accessibleLabel = `${member.name}, ${member.relationship}. ${member.memory}${member.voiceAvailable ? '. Voice note available' : ''
+    }`;
 
   return (
     <View accessible accessibilityRole="text" accessibilityLabel={accessibleLabel} style={styles.row}>

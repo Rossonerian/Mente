@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { StyleSheet, View, type ViewStyle } from 'react-native';
-import { caregiverTheme, patientTheme } from '../../theme/tokens';
+import { caregiverTheme, patientTheme } from '../../theme/tokens-enhanced';
 import { GlassLayers } from './GlassLayers';
 import { getGlassVisualTokens } from './GlassSurface.tokens';
 import type { GlassSurfaceProps } from './GlassSurface.types';

@@ -1,6 +1,6 @@
 import { StyleSheet, Text, type StyleProp, type ViewStyle } from 'react-native';
 import { MenteIcon } from './Icon';
-import { caregiverTheme, patientTheme, spacing } from '../theme/tokens';
+import { caregiverTheme, patientTheme, spacing } from '../theme/tokens-enhanced';
 import type { ThemeName } from './Card';
 import { FocusablePressable } from './FocusablePressable';
 

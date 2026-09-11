@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { Platform, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
-import { caregiverTheme, patientTheme, spacing } from '../theme/tokens';
+import { caregiverTheme, patientTheme, spacing } from '../theme/tokens-enhanced';
 
 const cardShadow = Platform.select({
   web: { boxShadow: '0 2px 8px rgba(27, 34, 69, 0.04)' },

@@ -1,5 +1,5 @@
 import { StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
-import { caregiverTheme, spacing } from '../theme/tokens';
+import { caregiverTheme, spacing } from '../theme/tokens-enhanced';
 import type { ThemeName } from './Card';
 import type { JSX } from 'react';
 

@@ -15,7 +15,7 @@ import { ToggleRow } from '../../components/ToggleRow';
 import { GlassSurface } from '../../components/glass/GlassSurface';
 import { mergeSavedFormValues, useCaregiverSettingsQuery, useUpdateCaregiverSettingsMutation } from '../../features/caregiver/settings/useCaregiverSettings';
 import { caregiverSettingsSchema } from '../../features/caregiver/settings/settingsSchema';
-import { caregiverTheme, spacing } from '../../theme/tokens';
+import { caregiverTheme, spacing } from '../../theme/tokens-enhanced';
 import { useCaregiverAuth } from '../../auth/CaregiverAuthContext';
 import { isDevelopmentMockMode } from '../../api/config';
 

@@ -10,17 +10,6 @@ export const spacing = {
   xxl: 40,
 } as const;
 
-export const typeScale = {
-  display: 32,
-  title: 26,
-  section: 18,
-  body: 16,
-  bodySmall: 14,
-  caption: 12,
-} as const;
-
-export type TypeScale = typeof typeScale;
-
 export const caregiverTheme = {
   colors: {
     primary: '#3448D8',
