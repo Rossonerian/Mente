@@ -4,14 +4,14 @@ import { ScreenScroll } from '../../components/Screen';
 import { StatBox } from '../../components/StatBox';
 import { CalloutBox } from '../../components/CalloutBox';
 import { InfoSection } from '../../components/InfoSection';
-import { Avatar, AvatarStack } from '../../components/Avatar';
+import { AvatarStack } from '../../components/Avatar';
 import { MenteButton } from '../../components/Button';
 import { caregiverTheme, spacing } from '../../theme/tokens-enhanced';
 import { menteMockData } from '../../data/mockData';
 import type { PatientRoute } from '../../types';
 
 export function PatientDashboardScreen({ onNavigate }: { onNavigate: (route: PatientRoute) => void }) {
-    const { patient, family, sessions, trend } = menteMockData;
+    const { patient, family, sessions } = menteMockData;
     const voiceCount = family.filter((member) => member.voiceAvailable).length;
 
     return (

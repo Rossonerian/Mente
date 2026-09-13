@@ -31,7 +31,7 @@ export function CheckinScreen({ onNavigate }: { onNavigate: (route: CaregiverRou
                     <Avatar initials={patient.initials} name={patient.name} size="large" theme="caregiver" tone="primary" />
                     <View style={styles.patientInfo}>
                         <Text style={styles.patientName}>{patient.name}</Text>
-                        <Text style={styles.patientMeta}>Ready for today's moment</Text>
+                        <Text style={styles.patientMeta}>Ready for today&apos;s moment</Text>
                     </View>
                 </View>
             </SurfaceCard>
@@ -46,18 +46,21 @@ export function CheckinScreen({ onNavigate }: { onNavigate: (route: CaregiverRou
                                 label="Happy"
                                 iconName="happy"
                                 onPress={() => setMood('happy')}
+                                selected={mood === 'happy'}
                                 theme="caregiver"
                             />
                             <IconButton
                                 label="Neutral"
                                 iconName="help-circle"
                                 onPress={() => setMood('neutral')}
+                                selected={mood === 'neutral'}
                                 theme="caregiver"
                             />
                             <IconButton
                                 label="Sad"
                                 iconName="sad"
                                 onPress={() => setMood('sad')}
+                                selected={mood === 'sad'}
                                 theme="caregiver"
                             />
                         </View>

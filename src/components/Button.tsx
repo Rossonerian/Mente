@@ -102,11 +102,17 @@ export function IconButton({
   onPress,
   theme = 'caregiver',
   iconName,
+  selected = false,
+  disabled = false,
+  accessibilityHint,
 }: {
   label: string;
   onPress: () => void;
   theme?: ThemeName;
   iconName: string;
+  selected?: boolean;
+  disabled?: boolean;
+  accessibilityHint?: string;
 }) {
   const tokens = theme === 'caregiver' ? caregiverTheme : patientTheme;
 
@@ -114,19 +120,32 @@ export function IconButton({
     <FocusablePressable
       accessibilityRole="button"
       accessibilityLabel={label}
+      accessibilityHint={accessibilityHint}
+      accessibilityState={{ selected, disabled }}
+      disabled={disabled}
       onPress={onPress}
       style={({ pressed, focused }) => [
         styles.iconButton,
         {
-          backgroundColor: theme === 'caregiver' ? tokens.colors.surfaceMuted : tokens.colors.coralSoft,
+          backgroundColor: disabled
+            ? tokens.colors.border
+            : selected
+              ? tokens.colors.primary
+              : theme === 'caregiver'
+                ? tokens.colors.surfaceMuted
+                : tokens.colors.coralSoft,
           borderRadius: tokens.radii.pill,
-          borderColor: tokens.colors.text,
-          borderWidth: focused ? 3 : 0,
-          opacity: pressed ? 0.7 : 1,
+          borderColor: focused ? tokens.colors.text : selected ? tokens.colors.primary : 'transparent',
+          borderWidth: focused ? 3 : selected ? 2 : 0,
+          opacity: pressed ? 0.7 : disabled ? 0.5 : 1,
         },
       ]}
     >
-      <MenteIcon name={iconName} size={22} color={tokens.colors.primary} />
+      <MenteIcon
+        name={iconName}
+        size={22}
+        color={selected ? tokens.colors.white : tokens.colors.primary}
+      />
     </FocusablePressable>
   );
 }
