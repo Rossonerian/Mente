@@ -83,7 +83,10 @@ export function GlassSurface({
           backgroundColor: reduceTransparencyEnabled ? visual.fallbackColor : 'transparent',
           borderColor: visual.borderColor,
           borderRadius: resolvedRadius,
-          boxShadow: `0px ${Math.round(visual.shadowDepth / 4)}px ${visual.shadowDepth}px ${visual.shadowColor}`,
+          shadowColor: visual.shadowColor,
+          shadowOffset: { width: 0, height: Math.round(visual.shadowDepth / 4) },
+          shadowOpacity: 1,
+          shadowRadius: visual.shadowDepth,
           overflow: 'hidden',
         },
       ]}

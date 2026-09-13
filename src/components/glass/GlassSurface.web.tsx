@@ -85,14 +85,8 @@ export function GlassSurface({
   const tokens = theme === 'caregiver' ? caregiverTheme : patientTheme;
   const resolvedRadius = radius ?? tokens.radii.card;
   const blurFilter = `blur(${visual.webBlurRadius}px) saturate(${visual.webSaturation}%)`;
-  const refractionFilter = `url(#${GLASS_FILTER_ID}) ${blurFilter}`;
-  const supportsRefraction = browserSupportsBackdropFilter(refractionFilter);
-  const supportsBackdropBlur = supportsRefraction || browserSupportsBackdropFilter(blurFilter);
-  const backdropStyle = supportsRefraction
-    ? getWebBackdropStyle(refractionFilter)
-    : supportsBackdropBlur
-      ? getWebBackdropStyle(blurFilter)
-      : null;
+  const supportsBackdropBlur = browserSupportsBackdropFilter(blurFilter);
+  const backdropStyle = supportsBackdropBlur ? getWebBackdropStyle(blurFilter) : null;
 
   useEffect(() => {
     ensureGlassFilter();

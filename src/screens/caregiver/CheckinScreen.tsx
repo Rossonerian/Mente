@@ -13,7 +13,7 @@ import { useState } from 'react';
 
 export function CheckinScreen({ onNavigate }: { onNavigate: (route: CaregiverRoute) => void }) {
     const { patient, family } = menteMockData;
-    const [mood, setMood] = useState<'happy' | 'neutral' | 'sad' | null>(null);
+    const [_mood, setMood] = useState<'happy' | 'neutral' | 'sad' | null>(null);
     const [sessionStarted, setSessionStarted] = useState(false);
 
     return (
@@ -31,7 +31,7 @@ export function CheckinScreen({ onNavigate }: { onNavigate: (route: CaregiverRou
                     <Avatar initials={patient.initials} name={patient.name} size="large" theme="caregiver" tone="primary" />
                     <View style={styles.patientInfo}>
                         <Text style={styles.patientName}>{patient.name}</Text>
-                        <Text style={styles.patientMeta}>Ready for today's moment</Text>
+                        <Text style={styles.patientMeta}>Ready for today&apos;s moment</Text>
                     </View>
                 </View>
             </SurfaceCard>

@@ -32,7 +32,6 @@ export function GlassSurface({
           backgroundColor: behavior.shouldRenderBlur ? 'transparent' : visual.fallbackColor,
           borderColor: visual.borderColor,
           borderRadius: resolvedRadius,
-          boxShadow: `0px ${Math.round(visual.shadowDepth / 4)}px ${visual.shadowDepth}px ${visual.shadowColor}`,
           elevation: Math.max(1, Math.round(visual.shadowDepth / 8)),
           overflow: 'hidden',
         },
