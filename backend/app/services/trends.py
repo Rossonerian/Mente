@@ -39,10 +39,22 @@ def build_patient_trend(db: Session, patient: Patient, now: datetime | None = No
         if session.status == "COMPLETED" or (session.metadata_json or {}).get("scorable_count", 0) >= 3
     ]
 
-    baseline = [session for session in sessions if baseline_start <= _as_utc(session.started_at) < baseline_end]
-    recent = [session for session in sessions if recent_start <= _as_utc(session.started_at) < recent_end]
-    baseline_days = {_as_utc(session.started_at).astimezone(patient_zone).date() for session in baseline}
-    recent_days = {_as_utc(session.started_at).astimezone(patient_zone).date() for session in recent}
+    # Performance optimization: Partition sessions into baseline and recent windows in a single pass,
+    # caching UTC timestamps and patient-local dates to eliminate redundant timezone conversions and list iterations.
+    baseline: list[CognitiveSession] = []
+    recent: list[CognitiveSession] = []
+    baseline_days: set[date] = set()
+    recent_days: set[date] = set()
+
+    for session in sessions:
+        started_utc = _as_utc(session.started_at)
+        session_date = started_utc.astimezone(patient_zone).date()
+        if baseline_start <= started_utc < baseline_end:
+            baseline.append(session)
+            baseline_days.add(session_date)
+        elif recent_start <= started_utc < recent_end:
+            recent.append(session)
+            recent_days.add(session_date)
 
     grouped_baseline = _group_sessions(baseline)
     grouped_recent = _group_sessions(recent)
