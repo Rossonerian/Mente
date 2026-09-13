@@ -1,4 +1,4 @@
-import { Text, StyleSheet, type StyleProp, type TextStyle } from 'react-native';
+import { Text, type StyleProp, type TextStyle } from 'react-native';
 import { caregiverTheme, patientTheme, typeScale } from '../theme/tokens';
 import type { ThemeName } from './Card';
 

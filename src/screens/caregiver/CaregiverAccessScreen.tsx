@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text } from 'react-native';
 import { PageHeader } from '../../components/PageHeader';
 import { ScreenScroll } from '../../components/Screen';
 import { MenteButton } from '../../components/Button';
@@ -47,13 +47,13 @@ export function CaregiverLoadingScreen() {
   );
 }
 
-export function CaregiverProfileSetupScreen() {
+export function CaregiverProfileSetupScreen({ accessToken, onComplete }: { accessToken?: string; onComplete?: () => void } = {}) {
   return (
     <ScreenScroll theme="caregiver">
       <PageHeader eyebrow="SETUP" title="Complete Your Profile" subtitle="Tell us about yourself" theme="caregiver" />
       <SurfaceCard theme="caregiver" style={styles.card}>
         <Text style={styles.title}>Profile Setup</Text>
-        <MenteButton label="Continue" onPress={() => {}} variant="primary" theme="caregiver" />
+        <MenteButton label="Continue" onPress={onComplete ?? (() => {})} variant="primary" theme="caregiver" />
       </SurfaceCard>
     </ScreenScroll>
   );

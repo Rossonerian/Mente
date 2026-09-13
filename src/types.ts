@@ -20,11 +20,11 @@ export interface TabItem<Route extends string = string> {
 }
 
 export interface FamilyMember {
-  messagesCount: number;
-  sessionsCount: number;
-  memoriesCount: number;
-  bio: string;
-  relation: ReactNode;
+  messagesCount?: number;
+  sessionsCount?: number;
+  memoriesCount?: number;
+  bio?: string;
+  relation?: ReactNode;
   id: string;
   name: string;
   relationship: string;

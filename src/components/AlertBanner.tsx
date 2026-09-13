@@ -25,7 +25,7 @@ export function AlertBanner({
   theme = 'caregiver',
   style,
 }: AlertBannerProps): JSX.Element {
-  const tokens = theme === 'caregiver' ? caregiverTheme : patientTheme;
+  const themeTokens = theme === 'caregiver' ? caregiverTheme : patientTheme;
 
   const colorMap: Record<AlertLevel, { bg: string; border: string; icon: string; eyebrow: string; text: string }> = {
     warning: {
@@ -33,21 +33,21 @@ export function AlertBanner({
       border: '#F3D5CC',
       icon: caregiverTheme.colors.alert,
       eyebrow: caregiverTheme.colors.alert,
-      text: caregiverTheme.colors.text,
+      text: themeTokens.colors.text,
     },
     success: {
       bg: caregiverTheme.colors.stableBackground,
       border: caregiverTheme.colors.stable,
       icon: caregiverTheme.colors.stable,
       eyebrow: caregiverTheme.colors.stable,
-      text: caregiverTheme.colors.text,
+      text: themeTokens.colors.text,
     },
     info: {
       bg: '#E3F2FD',
       border: '#90CAF9',
-      icon: caregiverTheme.colors.primary,
-      eyebrow: caregiverTheme.colors.primary,
-      text: caregiverTheme.colors.text,
+      icon: themeTokens.colors.primary,
+      eyebrow: themeTokens.colors.primary,
+      text: themeTokens.colors.text,
     },
   };
 
@@ -87,7 +87,7 @@ export function AlertBanner({
         </View>
       </View>
 
-      <Text style={[styles.message, { color: caregiverTheme.colors.textMuted }]}>{message}</Text>
+      <Text style={[styles.message, { color: themeTokens.colors.textMuted }]}>{message}</Text>
 
       {children && <View style={styles.footer}>{children}</View>}
     </View>
