@@ -87,7 +87,7 @@ export function AppRouter() {
         {route === 'history' ? <CaregiverHistoryScreen caregiverId={caregiverAuth.kind === 'signed-in' ? caregiverAuth.user.id : null} accessToken={caregiverAuth.kind === 'signed-in' ? caregiverAuth.accessToken : null} /> : null}
         {route === 'family' ? <CaregiverFamilyScreen onOpenSetup={() => navigateCaregiver('setup')} caregiverId={caregiverAuth.kind === 'signed-in' ? caregiverAuth.user.id : null} accessToken={caregiverAuth.kind === 'signed-in' ? caregiverAuth.accessToken : null} /> : null}
         {route === 'settings' ? <CaregiverSettingsScreen onOpenSetup={() => navigateCaregiver('setup')} onSwitchRole={switchRole} caregiverId={caregiverAuth.kind === 'signed-in' ? caregiverAuth.user.id : null} accessToken={caregiverAuth.kind === 'signed-in' ? caregiverAuth.accessToken : null} /> : null}
-        {route === 'setup' ? <CaregiverSetupScreen onBack={() => navigateCaregiver('settings')} caregiverId={caregiverAuth.kind === 'signed-in' ? caregiverAuth.user.id : null} accessToken={caregiverAuth.kind === 'signed-in' ? caregiverAuth.accessToken : null} /> : null}
+        {route === 'setup' ? <CaregiverSetupScreen onBack={() => navigateCaregiver('settings')} onSaved={() => navigateCaregiver('family')} caregiverId={caregiverAuth.kind === 'signed-in' ? caregiverAuth.user.id : null} accessToken={caregiverAuth.kind === 'signed-in' ? caregiverAuth.accessToken : null} /> : null}
       </AppShell>
     );
   }

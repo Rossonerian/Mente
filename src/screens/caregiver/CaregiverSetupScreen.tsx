@@ -15,6 +15,8 @@ import { PageHeader } from '../../components/PageHeader';
 import { ScreenScroll } from '../../components/Screen';
 import { caregiverTheme, spacing } from '../../theme/tokens-enhanced';
 import { toSetupFormField } from '../../features/caregiver/setup/formFields';
+import { caregiverContextKey } from '../../features/caregiver/useCaregiverContext';
+import type { FamilyDto } from '../../api/contracts/caregiver';
 
 const setupSchema = z.object({
   familyName: z.string().trim().min(1, 'Enter a family name.').max(120),
@@ -26,29 +28,34 @@ const setupSchema = z.object({
 });
 type SetupValues = z.infer<typeof setupSchema>;
 
-export function CaregiverSetupScreen({ onBack, caregiverId, accessToken }: { onBack: () => void; caregiverId: string | null; accessToken: string | null }) {
+export function CaregiverSetupScreen({ onBack, onSaved, caregiverId, accessToken }: { onBack: () => void; onSaved: () => void; caregiverId: string | null; accessToken: string | null }) {
   if (isDevelopmentMockMode) return <SetupState title="Preview setup" body="Development preview does not create a family or patient record." onBack={onBack} />;
   if (!caregiverId || !accessToken) return <SetupState title="Caregiver sign-in required" body="Sign in with a caregiver account before creating a family profile." onBack={onBack} />;
-  return <ConnectedSetup onBack={onBack} caregiverId={caregiverId} accessToken={accessToken} />;
+  return <ConnectedSetup onBack={onBack} onSaved={onSaved} caregiverId={caregiverId} accessToken={accessToken} />;
 }
 
-function ConnectedSetup({ onBack, caregiverId, accessToken }: { onBack: () => void; caregiverId: string; accessToken: string }) {
+function ConnectedSetup({ onBack, onSaved, caregiverId, accessToken }: { onBack: () => void; onSaved: () => void; caregiverId: string; accessToken: string }) {
   const queryClient = useQueryClient();
   const client = useMemo(() => createCaregiverClient(accessToken), [accessToken]);
-  const [createdFamilyId, setCreatedFamilyId] = useState<string | null>(null);
+  const [createdFamily, setCreatedFamily] = useState<FamilyDto | null>(null);
+  const createdFamilyId = createdFamily?.id;
   const form = useForm<SetupValues>({ defaultValues: { familyName: '', preferredName: '', legalName: '', phoneE164: '', timezone: 'Asia/Kolkata', languageCode: 'en-IN' }, resolver: zodResolver(setupSchema), mode: 'onBlur' });
   const mutation = useMutation({
     mutationFn: async (values: SetupValues) => {
-      const familyId = createdFamilyId ?? (await client.createFamily({ name: values.familyName, mode: 'SOLO' })).id;
+      const family = createdFamily ?? await client.createFamily({ name: values.familyName, mode: 'SOLO' });
       try {
-        const patient = await client.createPatient(familyId, { preferred_name: values.preferredName, legal_name: values.legalName || null, phone_e164: values.phoneE164 || null, timezone: values.timezone, preferred_language: values.languageCode });
-        return { familyId, patient };
-      } catch (error) { setCreatedFamilyId(familyId); throw error; }
+        const patient = await client.createPatient(family.id, { preferred_name: values.preferredName, legal_name: values.legalName || null, phone_e164: values.phoneE164 || null, timezone: values.timezone, preferred_language: values.languageCode });
+        return { family, patient };
+      } catch (error) { setCreatedFamily(family); throw error; }
     },
-    onSuccess: () => { setCreatedFamilyId(null); void queryClient.invalidateQueries({ queryKey: ['caregiver', caregiverId] }); },
+    onSuccess: ({ family, patient }) => {
+      setCreatedFamily(null);
+      queryClient.setQueryData(caregiverContextKey(caregiverId), { family, patient });
+      void queryClient.invalidateQueries({ queryKey: ['caregiver', caregiverId] });
+    },
   });
   const submit = form.handleSubmit(async (values) => {
-    try { await mutation.mutateAsync(values); onBack(); }
+    try { await mutation.mutateAsync(values); onSaved(); }
     catch (error) {
       if (error instanceof ApiError) {
         for (const [field, message] of Object.entries(error.fieldErrors)) {
@@ -59,10 +66,10 @@ function ConnectedSetup({ onBack, caregiverId, accessToken }: { onBack: () => vo
   });
   const error = mutation.error instanceof ApiError ? mutation.error.message : mutation.isError ? 'Mente could not save this family setup. Your entered details are still here.' : null;
   return <ScreenScroll theme="caregiver"><PageHeader eyebrow="Companion setup" title="Set up a familiar moment" subtitle="Add a family and the person whose familiar memories Mente will support." theme="caregiver" onBack={onBack} />
-    <SurfaceCard theme="caregiver" style={styles.card}><CardHeader /><SetupField control={form.control} name="familyName" label="Family name" hint="For example, Delgado family" disabled={mutation.isPending} /><SetupField control={form.control} name="preferredName" label="Preferred name" hint="The name used in gentle companion moments" disabled={mutation.isPending} /><SetupField control={form.control} name="legalName" label="Legal name" hint="Optional" disabled={mutation.isPending} /><SetupField control={form.control} name="phoneE164" label="Patient phone" hint="Optional now; required before activating calls" disabled={mutation.isPending} keyboardType="phone-pad" /><SetupField control={form.control} name="timezone" label="Time zone" hint="IANA zone, for example Asia/Kolkata" disabled={mutation.isPending} /><SetupField control={form.control} name="languageCode" label="Language" hint="Language code, for example en-IN" disabled={mutation.isPending} /></SurfaceCard>
+    <SurfaceCard theme="caregiver" style={styles.card}><CardHeader /><SetupField control={form.control} name="familyName" label="Family name" hint={createdFamily ? 'This family is already saved. Retry adding the person below.' : 'For example, Delgado family'} disabled={mutation.isPending || Boolean(createdFamily)} /><SetupField control={form.control} name="preferredName" label="Preferred name" hint="The name used in gentle companion moments" disabled={mutation.isPending} /><SetupField control={form.control} name="legalName" label="Legal name" hint="Optional" disabled={mutation.isPending} /><SetupField control={form.control} name="phoneE164" label="Patient phone" hint="Optional now; required before activating calls" disabled={mutation.isPending} keyboardType="phone-pad" /><SetupField control={form.control} name="timezone" label="Time zone" hint="IANA zone, for example Asia/Kolkata" disabled={mutation.isPending} /><SetupField control={form.control} name="languageCode" label="Language" hint="Language code, for example en-IN" disabled={mutation.isPending} /></SurfaceCard>
     {createdFamilyId ? <SoftPanel theme="caregiver" style={styles.notice}><Text style={styles.noticeText}>The family profile was saved. You can retry adding the person without creating another family.</Text></SoftPanel> : null}
     {error ? <SoftPanel theme="caregiver" style={styles.error}><Text accessibilityLiveRegion="polite" style={styles.errorText}>{error}</Text></SoftPanel> : null}
-    <MenteButton label={mutation.isPending ? 'Saving setup…' : createdFamilyId ? 'Retry adding person' : 'Save setup'} onPress={submit} disabled={mutation.isPending} theme="caregiver" iconName="checkmark-outline" style={styles.button} /><TextButton label="Cancel" onPress={onBack} theme="caregiver" iconName="close-outline" accessibilityHint="Returns without changing unsaved details" />
+    <MenteButton label={mutation.isPending ? 'Saving setup…' : createdFamilyId ? 'Retry adding person' : 'Save setup'} onPress={submit} disabled={mutation.isPending || form.formState.isSubmitting} theme="caregiver" iconName="checkmark-outline" style={styles.button} /><TextButton label="Cancel" onPress={onBack} theme="caregiver" iconName="close-outline" accessibilityHint="Returns without changing unsaved details" />
   </ScreenScroll>;
 }
 

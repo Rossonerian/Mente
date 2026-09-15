@@ -10,6 +10,7 @@ import { createCaregiverClient, type CaregiverClient } from '../../../api/caregi
 import { ApiError } from '../../../api/errors';
 import type { CallScheduleDto, NotificationPreferenceDto } from '../../../api/contracts/settings';
 import { caregiverSettingsKeys } from './queryKeys';
+import { loadCaregiverContext } from '../loadCaregiverContext';
 
 export type CaregiverSettingsState =
   | { kind: 'loading' }
@@ -61,12 +62,7 @@ export function useCaregiverSettingsQuery({ caregiverId, accessToken }: { caregi
     queryKey: caregiverSettingsKeys.context(caregiverId),
     enabled: Boolean(client),
     queryFn: async ({ signal }): Promise<SettingsContext | null> => {
-      const families = await client!.listFamilies(signal);
-      const family = families[0];
-      if (!family) return null;
-      const patients = await client!.listFamilyPatients(family.id, signal);
-      const patient = patients[0];
-      return patient ? { patient } : null;
+      return loadCaregiverContext(client!, signal);
     },
   });
   const patientId = context.data?.patient.id;

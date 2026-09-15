@@ -54,8 +54,8 @@ export function CaregiverHomeScreen({ onNavigate, accessToken, caregiverId }: { 
     <ScreenScroll theme="caregiver">
       <PageHeader
         eyebrow="Caregiver home"
-        title="Good morning, Ana"
-        subtitle="A clear view of Rosa’s recent moments, all in one place."
+        title="Your care space"
+        subtitle={`A clear view of ${patient.preferredName}’s recent moments, all in one place.`}
         theme="caregiver"
       />
 
@@ -69,7 +69,7 @@ export function CaregiverHomeScreen({ onNavigate, accessToken, caregiverId }: { 
               <StatusPill status={trend.status} label={trend.label} />
             </View>
           </View>
-          <IconButton label="Open Rosa's activity" iconName="chevron-forward" onPress={() => onNavigate('history')} />
+          <IconButton label={`Open ${patient.preferredName}'s activity`} iconName="chevron-forward" onPress={() => onNavigate('history')} />
         </View>
         <View style={styles.patientDivider} />
         <View style={styles.patientFooter}>
@@ -145,7 +145,7 @@ export function CaregiverHomeScreen({ onNavigate, accessToken, caregiverId }: { 
             ))}
           </SurfaceCard>
 
-          <SectionHeader title="Rosa’s family" actionLabel="Open family" onActionPress={() => onNavigate('family')} theme="caregiver" />
+          <SectionHeader title={`${patient.preferredName}’s family`} actionLabel="Open family" onActionPress={() => onNavigate('family')} theme="caregiver" />
           <SurfaceCard theme="caregiver" style={styles.familyCard}>
             <View style={styles.familyTopRow}>
               {family.length ? <AvatarStack people={family.map(({ initials, name }) => ({ initials, name }))} theme="caregiver" /> : <FamilyConstellation theme="caregiver" />}

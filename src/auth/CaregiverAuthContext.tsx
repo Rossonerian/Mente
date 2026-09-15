@@ -15,7 +15,7 @@ export type CaregiverAuthState =
 interface CaregiverAuthValue {
   state: CaregiverAuthState;
   signIn(email: string, password: string): Promise<string | null>;
-  signUp(email: string, password: string, displayName: string): Promise<{ message: string | null; requiresConfirmation: boolean }>;
+  signUp(email: string, password: string, displayName: string): Promise<string | null>;
   refreshProfile(): Promise<void>;
   signOut(): Promise<void>;
 }
@@ -95,17 +95,15 @@ export function CaregiverAuthProvider({ children }: { children: ReactNode }) {
       return error ? getSafeCaregiverSignInMessage(error.message) : null;
     },
     async signUp(email, password, displayName) {
-      if (!client) return { message: 'Caregiver sign-up is not configured on this build.', requiresConfirmation: false };
+      if (!client) return 'Caregiver sign-up is not configured on this build.';
       const { data, error } = await client.auth.signUp({
         email: email.trim(),
         password,
         options: { data: { display_name: displayName.trim() } },
       });
-      if (error) return { message: getSafeCaregiverSignUpMessage(error.message), requiresConfirmation: false };
-      return {
-        message: data.session ? null : 'Check your email to confirm your caregiver account, then sign in.',
-        requiresConfirmation: !data.session,
-      };
+      if (error) return getSafeCaregiverSignUpMessage(error.message);
+      if (!data.session) return 'Account created. Sign in to continue.';
+      return null;
     },
     async refreshProfile() {
       if (!client) return;

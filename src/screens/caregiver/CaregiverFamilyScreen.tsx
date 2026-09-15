@@ -18,6 +18,7 @@ import { isDevelopmentMockMode } from '../../api/config';
 import type { FamilyMember } from '../../types';
 import type { CaregiverClient } from '../../api/caregiverClient';
 import type { DevelopmentAccessCodeDto } from '../../api/contracts/caregiver';
+import type { CaregiverContextData } from '../../features/caregiver/loadCaregiverContext';
 
 export function CaregiverFamilyScreen({ onOpenSetup, accessToken, caregiverId }: { onOpenSetup: () => void; accessToken: string | null; caregiverId: string | null }) {
   if (isDevelopmentMockMode) return <FamilyContent onOpenSetup={onOpenSetup} family={menteMockData.family} patientName={menteMockData.patient.preferredName} live={false} />;
@@ -32,7 +33,7 @@ function ConnectedFamily({ onOpenSetup, accessToken, caregiverId }: { onOpenSetu
   return <ConnectedFamilyContent onOpenSetup={onOpenSetup} caregiverId={caregiverId!} context={context.data} />;
 }
 
-function ConnectedFamilyContent({ onOpenSetup, caregiverId, context }: { onOpenSetup: () => void; caregiverId: string; context: { patient: { id: string; preferred_name: string }; client: CaregiverClient } }) {
+function ConnectedFamilyContent({ onOpenSetup, caregiverId, context }: { onOpenSetup: () => void; caregiverId: string; context: CaregiverContextData & { client: CaregiverClient } }) {
   const memories = useQuery({ queryKey: ['caregiver', caregiverId, 'patient', context.patient.id, 'memories'], queryFn: ({ signal }) => context.client.listMemories(context.patient.id, signal), staleTime: 60_000 });
   const developmentAccess = useQuery({
     queryKey: ['caregiver', caregiverId, 'patient', context.patient.id, 'development-access-code'],
@@ -41,10 +42,10 @@ function ConnectedFamilyContent({ onOpenSetup, caregiverId, context }: { onOpenS
   });
   if (memories.isPending) return <FamilyState title="Loading family" body="Loading saved family memories…" />;
   if (memories.error instanceof Error) return <FamilyState title="Family is unavailable" body="Mente could not load family memories right now." actionLabel="Retry" onAction={() => void memories.refetch()} />;
-  return <FamilyContent onOpenSetup={onOpenSetup} family={(memories.data ?? []).map(adaptMemoryToFamilyMember)} patientName={context.patient.preferred_name} live developmentAccess={developmentAccess.data?.enabled ? developmentAccess.data : null} />;
+  return <FamilyContent onOpenSetup={onOpenSetup} family={(memories.data ?? []).map(adaptMemoryToFamilyMember)} patientName={context.patient.preferred_name} live profile={context} developmentAccess={developmentAccess.data?.enabled ? developmentAccess.data : null} />;
 }
 
-function FamilyContent({ onOpenSetup, family, patientName, live, developmentAccess }: { onOpenSetup: () => void; family: FamilyMember[]; patientName: string; live: boolean; developmentAccess?: DevelopmentAccessCodeDto | null }) {
+function FamilyContent({ onOpenSetup, family, patientName, live, profile, developmentAccess }: { onOpenSetup: () => void; family: FamilyMember[]; patientName: string; live: boolean; profile?: CaregiverContextData; developmentAccess?: DevelopmentAccessCodeDto | null }) {
   const [editPreview, setEditPreview] = useState(false);
   const voiceCount = family.filter((member) => member.voiceAvailable).length;
 
@@ -56,6 +57,16 @@ function FamilyContent({ onOpenSetup, family, patientName, live, developmentAcce
         subtitle="Keep the people, voices, and memories that make each moment feel familiar."
         theme="caregiver"
       />
+
+      {profile ? <SurfaceCard theme="caregiver" style={styles.profileCard}>
+        <Text style={styles.overviewTitle}>Saved family and patient details</Text>
+        <Text style={styles.overviewBody}>Family: {profile.family.name}</Text>
+        <Text style={styles.overviewBody}>Preferred name: {profile.patient.preferred_name}</Text>
+        <Text style={styles.overviewBody}>Legal name: {profile.patient.legal_name || 'Not provided'}</Text>
+        <Text style={styles.overviewBody}>Patient phone: {profile.patient.phone_e164 || 'Not provided'}</Text>
+        <Text style={styles.overviewBody}>Time zone: {profile.patient.timezone}</Text>
+        <Text style={styles.overviewBody}>Language: {profile.patient.preferred_language}</Text>
+      </SurfaceCard> : null}
 
       <GlassSurface theme="caregiver" variant="elevated" style={styles.overviewCard}>
         <View style={styles.overviewTopRow}>
@@ -137,6 +148,7 @@ function FamilyState({ title, body, actionLabel, onAction }: { title: string; bo
 }
 
 const styles = StyleSheet.create({
+  profileCard: { gap: spacing.xs, marginBottom: spacing.lg },
   overviewCard: {
     gap: spacing.md,
     marginBottom: spacing.xl,

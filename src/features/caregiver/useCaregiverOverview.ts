@@ -5,6 +5,8 @@ import { createCaregiverClient } from '../../api/caregiverClient';
 import { isDevelopmentMockMode } from '../../api/config';
 import { ApiError } from '../../api/errors';
 import { menteMockData } from '../../data/mockData';
+import { caregiverContextKey } from './useCaregiverContext';
+import { loadCaregiverContext } from './loadCaregiverContext';
 
 export type CaregiverOverviewState =
   | { kind: 'mock'; data: typeof menteMockData }
@@ -23,20 +25,13 @@ export function useCaregiverOverview(accessToken: string | null, caregiverId: st
       return null;
     }
   }, [accessToken]);
-  const families = useQuery({
-    queryKey: ['caregiver', caregiverId ?? 'anonymous', 'families'],
-    queryFn: ({ signal }) => client!.listFamilies(signal),
+  const context = useQuery({
+    queryKey: caregiverContextKey(caregiverId ?? 'anonymous'),
+    queryFn: ({ signal }) => loadCaregiverContext(client!, signal),
     enabled: Boolean(client),
     staleTime: 60_000,
   });
-  const familyId = families.data?.[0]?.id;
-  const patients = useQuery({
-    queryKey: ['caregiver', caregiverId ?? 'anonymous', 'family', familyId, 'patients'],
-    queryFn: ({ signal }) => client!.listFamilyPatients(familyId!, signal),
-    enabled: Boolean(client && familyId),
-    staleTime: 60_000,
-  });
-  const patientId = patients.data?.[0]?.id;
+  const patientId = context.data?.patient.id;
   const overview = useQuery({
     queryKey: ['caregiver', caregiverId ?? 'anonymous', 'patient', patientId, 'overview'],
     queryFn: ({ signal }) => client!.getOverview(patientId!, signal),
@@ -46,25 +41,24 @@ export function useCaregiverOverview(accessToken: string | null, caregiverId: st
 
   if (isDevelopmentMockMode) return { kind: 'mock', data: menteMockData };
   if (!accessToken) return { kind: 'loading' };
-  const error = getApiError(families.error) ?? getApiError(patients.error) ?? getApiError(overview.error);
+  const retry = () => { void context.refetch(); if (patientId) void overview.refetch(); };
+  const error = getApiError(context.error) ?? getApiError(overview.error);
   if (error?.kind === 'forbidden' && error.code === 'CAREGIVER_PROFILE_NOT_PROVISIONED') {
-    return { kind: 'profile-required', retry: () => void families.refetch() };
+    return { kind: 'profile-required', retry };
   }
   if (error) {
     const staleData = overview.data ? adaptCaregiverOverview(overview.data, new Date(overview.dataUpdatedAt)) : undefined;
-    return { kind: 'error', error, retry: () => void families.refetch(), staleData };
+    return { kind: 'error', error, retry, staleData };
   }
-  if (families.isPending) return { kind: 'loading' };
-  if (!families.data?.length) return { kind: 'empty' };
-  if (patients.isPending) return { kind: 'loading' };
-  if (!patients.data?.length) return { kind: 'empty' };
+  if (context.isPending) return { kind: 'loading' };
+  if (!context.data) return { kind: 'empty' };
   if (overview.isPending) return { kind: 'loading' };
-  if (!familyId || !patientId || !overview.data) return { kind: 'empty' };
+  if (!patientId || !overview.data) return { kind: 'empty' };
   return {
     kind: 'ready',
     data: adaptCaregiverOverview(overview.data, new Date(overview.dataUpdatedAt)),
-    isRefreshing: overview.isFetching,
-    refresh: () => void overview.refetch(),
+    isRefreshing: overview.isFetching || context.isFetching,
+    refresh: retry,
   };
 }
 

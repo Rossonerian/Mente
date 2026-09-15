@@ -23,6 +23,9 @@ class VerifiedSupabaseClaims:
     subject: str
     email: str
     role: str
+    session_id: str = ""
+    issued_at: int = 0
+    assurance_level: str = "aal1"
 
 
 class SupabaseTokenVerifier:
@@ -70,7 +73,7 @@ class SupabaseTokenVerifier:
                 algorithms=[algorithm],
                 audience=self.audience,
                 issuer=self.issuer,
-                options={"require": ["aud", "exp", "iss", "role", "sub"]},
+                options={"require": ["aud", "exp", "iat", "iss", "role", "sub", "session_id"]},
             )
         except SupabaseTokenError:
             raise
@@ -90,7 +93,17 @@ class SupabaseTokenVerifier:
             email = ""
         if role != "authenticated":
             raise SupabaseTokenError("Token is not an authenticated caregiver session")
-        return VerifiedSupabaseClaims(subject=subject, email=email.lower(), role=role)
+        try:
+            session_id = str(UUID(payload["session_id"]))
+        except (ValueError, TypeError, AttributeError) as exc:
+            raise SupabaseTokenError("Invalid token session") from exc
+        issued_at = payload["iat"]
+        if not isinstance(issued_at, int) or isinstance(issued_at, bool):
+            raise SupabaseTokenError("Invalid token issuance time")
+        aal = payload.get("aal", "aal1")
+        if aal not in {"aal1", "aal2"}:
+            raise SupabaseTokenError("Invalid assurance level")
+        return VerifiedSupabaseClaims(subject, email.lower(), role, session_id, issued_at, aal)
 
     def _verify_with_auth_server(self, token: str) -> VerifiedSupabaseClaims:
         """Local-only fallback for CLI projects that still issue HS256 tokens.
@@ -126,7 +139,22 @@ class SupabaseTokenVerifier:
             subject = str(UUID(subject))
         except ValueError as exc:
             raise SupabaseTokenError("Invalid token subject") from exc
-        return VerifiedSupabaseClaims(subject=subject, email=email.lower(), role="authenticated")
+        # Only after Auth has verified the signature may local HS256 claims be
+        # read. The session guard independently checks provider rows on every API.
+        try:
+            claims = jwt.decode(token, options={"verify_signature": False})
+            session_id = str(UUID(claims["session_id"]))
+            issued_at = claims["iat"]
+            if claims.get("role") != "authenticated" or claims.get("sub") != subject:
+                raise ValueError("Invalid local token identity")
+            if claims.get("iss") != self.issuer or claims.get("aud") != self.audience:
+                raise ValueError("Invalid local token issuer or audience")
+            if not isinstance(issued_at, int) or claims.get("aal", "aal1") not in {"aal1", "aal2"}:
+                raise ValueError("Invalid local token claims")
+        except (jwt.PyJWTError, ValueError, KeyError, TypeError, AttributeError) as exc:
+            raise SupabaseTokenError("Invalid local token session") from exc
+        return VerifiedSupabaseClaims(subject, email.lower(), "authenticated", session_id, issued_at,
+                                      claims.get("aal", "aal1"))
 
 
 def hash_opaque_token(value: str) -> str:

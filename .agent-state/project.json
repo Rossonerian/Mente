@@ -31,6 +31,24 @@
       "repository_can_enforce_zed_model": false
     }
   },
+  "auth_continuation": {
+    "milestone": "AUTHDESIGN-001",
+    "observed_at": "2026-09-15",
+    "supervisor": "Russell / 01a0a1e5-f945-7d83-b398-bd6d52e52b3d",
+    "supervisor_spawn_api_available": false,
+    "windows_validator": "Use backend/.venv/Scripts/python.exe .agent-scripts/validate --project explicitly. Bare extensionless helper can open Notepad through Windows file association; its exit status is not validator evidence. Leave user Notepad/processes untouched.",
+    "coordination_api": "send_message_to_thread succeeded for three actual parent-brokered workers; no send_input API",
+    "worker_model_policy": "CRITICAL milestone; inherit runtime model per user instruction",
+    "workers": {
+      "AUTHTYPE-001": "Archimedes / 01a0a1e6-6329-7023-8bd6-a5a7f75eb41e",
+      "AUTHSEC-001": "Hilbert / 01a0a1e6-63fd-7e42-8ece-f1bc2857a1c7",
+      "AUTHQA-001": "Epicurus / 01a0a1e6-64df-7912-a1a1-a65fd5498080"
+    },
+    "latest_decisions": ["No mandatory email verification; recovery email proof remains", "Keep minimum 12 characters", "No BFF/cookie architecture change authorized; web localStorage XSS residual requires product/security decision before production"],
+    "supervisor_write_scope": ["root .agent-state except BOSS-exclusive review", "docs/reviews/auth-ui-security-plan.md prose/checklists only"],
+    "integration_start_gate": "AUTHTYPE-001, AUTHSEC-001, AUTHQA-001 and AUTHREUSE-001 approved with current independent evidence",
+    "historical_capabilities_notice": "The generic capabilities above describe parent runtime availability, not this Supervisor child; older worker names/results are historical."
+  },
   "paths": {
     "roles": ".agents",
     "tasks": ".agent-state/tasks",
@@ -40,6 +58,10 @@
     "worktrees": ".agent-worktrees"
   },
   "quality_commands": {
+    "agent_state_windows": [
+      "backend/.venv/Scripts/python.exe .agent-scripts/validate --project",
+      "git diff --check"
+    ],
     "frontend": [
       "npm run typecheck",
       "npm run lint",

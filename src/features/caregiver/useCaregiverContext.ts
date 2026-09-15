@@ -4,6 +4,7 @@ import { createCaregiverClient, type CaregiverClient } from '../../api/caregiver
 import { isDevelopmentMockMode } from '../../api/config';
 import { ApiError } from '../../api/errors';
 import type { FamilyDto, PatientDto } from '../../api/contracts/caregiver';
+import { loadCaregiverContext } from './loadCaregiverContext';
 
 export interface CaregiverPatientContext {
   client: CaregiverClient;
@@ -35,14 +36,7 @@ export function useCaregiverPatientContext(accessToken: string | null, caregiver
   const query = useQuery({
     queryKey: caregiverContextKey(caregiverId ?? 'anonymous'),
     enabled: Boolean(clientResult.client && caregiverId),
-    queryFn: async ({ signal }): Promise<CaregiverPatientContextData | null> => {
-      const families = await clientResult.client!.listFamilies(signal);
-      const family = families[0];
-      if (!family) return null;
-      const patients = await clientResult.client!.listFamilyPatients(family.id, signal);
-      const patient = patients[0];
-      return patient ? { family, patient } : null;
-    },
+    queryFn: ({ signal }) => loadCaregiverContext(clientResult.client!, signal),
     staleTime: 60_000,
   });
   const retry = () => void query.refetch();
