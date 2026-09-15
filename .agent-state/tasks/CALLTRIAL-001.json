@@ -1,0 +1,49 @@
+{
+  "id": "CALLTRIAL-001",
+  "claim_key": "integration.callbot-trial-auth-review",
+  "title": "Review authenticated Twilio trial gateway compatibility",
+  "type": "TASK",
+  "owner": "REVIEWER",
+  "model_class": "CRITICAL",
+  "priority": "HIGH",
+  "status": "DONE",
+  "objective": "Independently review bounded opt-in trial webhook capability authentication, fail-closed provider identity verification and callback compatibility without real calls or secret access.",
+  "dependencies": [],
+  "execution_mode": "READ_ONLY",
+  "allowed_scope": [
+    "C:/Users/kashy/Documents/ChatGPT/call bot/mdoner-service-a-call-bot/app/**",
+    "C:/Users/kashy/Documents/ChatGPT/call bot/mdoner-service-a-call-bot/tests/**",
+    "docs/CALL_BOT_SETUP.md"
+  ],
+  "read_only_scope": [
+    "C:/Users/kashy/Documents/ChatGPT/call bot/mdoner-service-a-call-bot/app/**",
+    "C:/Users/kashy/Documents/ChatGPT/call bot/mdoner-service-a-call-bot/tests/**",
+    "docs/CALL_BOT_SETUP.md"
+  ],
+  "forbidden_scope": [
+    "secrets",
+    "real provider requests",
+    "writes",
+    "commits",
+    "pushes",
+    "deployment"
+  ],
+  "acceptance_criteria": [
+    "No unsigned call without high-entropy per-call capability and verified provider CallSid",
+    "Invalid signatures remain rejected",
+    "Capability expires and cannot switch patient or call",
+    "Signed standard flow preserved"
+  ],
+  "required_tests": [
+    "bot focused and full pytest"
+  ],
+  "workspace": "C:\\Users\\kashy\\Documents\\ChatGPT\\Dimentia",
+  "branch": "main",
+  "result": {
+    "summary": "Independent reviewer APPROVE; BOSS accepts bounded default-off trial authentication source/test change. 126 bot tests, targeted Ruff and disposable cross-service smoke pass. Actual unsigned voice progression awaits answered runtime test; latest controlled call returned busy. Automatic scheduler remains false.",
+    "handoff": ".agent-state/handoffs/CALLBOT-001.md"
+  },
+  "review_status": "APPROVE",
+  "qa_status": "PASS",
+  "blockers": []
+}

@@ -17,6 +17,7 @@ export const menteMockData: MenteMockData = {
       initials: 'AD',
       memory: 'Sunday lunches and the lemon cake recipe',
       voiceAvailable: true,
+      avatar: require('../../assets/images/family/ana.png'),
     },
     {
       id: 'miguel',
@@ -25,6 +26,7 @@ export const menteMockData: MenteMockData = {
       initials: 'MD',
       memory: 'The old blue bicycle by the front gate',
       voiceAvailable: true,
+      avatar: require('../../assets/images/family/miguel.jpg'),
     },
     {
       id: 'sofia',
@@ -33,6 +35,7 @@ export const menteMockData: MenteMockData = {
       initials: 'SD',
       memory: 'Saturday music in the living room',
       voiceAvailable: true,
+      avatar: require('../../assets/images/family/sofia.png'),
     },
   ],
   sessions: [

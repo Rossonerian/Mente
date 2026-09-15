@@ -1,29 +1,10 @@
 import { StyleSheet, View } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { getGlassPalette, getRoleBackgroundStops } from './GlassSurface.tokens';
 import type { GlassTheme } from './GlassSurface.types';
 
-export function GlassBackdropScene({ theme }: { theme: GlassTheme }) {
-  const palette = getGlassPalette(theme);
-  const backgroundStops = getRoleBackgroundStops(theme);
+import { Image } from 'react-native';
 
-  return (
-    <View
-      accessible={false}
-      importantForAccessibility="no-hide-descendants"
-      style={[StyleSheet.absoluteFill, styles.nonInteractive]}
-    >
-      <LinearGradient
-        accessible={false}
-        colors={backgroundStops}
-        importantForAccessibility="no-hide-descendants"
-        style={[StyleSheet.absoluteFill, styles.nonInteractive]}
-      />
-      <View style={[styles.topRibbon, { backgroundColor: palette.accentPrimary }]} />
-      <View style={[styles.middleRibbon, { backgroundColor: palette.accentSecondary }]} />
-      <View style={[styles.bottomRing, { borderColor: palette.accentOutline }]} />
-    </View>
-  );
+export function GlassBackdropScene({ theme }: { theme: GlassTheme }) {
+  return null;
 }
 
 const styles = StyleSheet.create({

@@ -12,6 +12,8 @@ import { adaptMemoryToFamilyMember } from '../../api/adapters/caregiverFamily';
 import { isDevelopmentMockMode } from '../../api/config';
 import { usePatientMemoryQuery } from '../../features/patient/usePatientSession';
 import type { FamilyMember } from '../../types';
+import { FamilyTreeGame } from '../../features/patient/components/FamilyTreeGame';
+import { MemoryGallery } from '../../features/patient/components/MemoryGallery';
 
 export function PatientFamilyScreen({ patientToken = null }: { patientToken?: string | null }) {
   if (isDevelopmentMockMode) return <PatientFamilyContent family={menteMockData.family} />;
@@ -53,6 +55,9 @@ function PatientFamilyContent({ family }: { family: FamilyMember[] }) {
           </View>
         ))}
       </SurfaceCard>
+
+      <FamilyTreeGame />
+      <MemoryGallery />
 
       {playedName ? (
         <SoftPanel theme="patient" style={styles.playedPanel}>

@@ -5,7 +5,7 @@ import { AppProviders } from './src/providers/AppProviders';
 
 export default function App() {
   return (
-    <SafeAreaProvider>
+    <SafeAreaProvider style={{ flex: 1, width: '100%', height: '100%' }}>
       <StatusBar style="dark" />
       <AppProviders><AppRouter /></AppProviders>
     </SafeAreaProvider>

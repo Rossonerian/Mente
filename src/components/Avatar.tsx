@@ -1,17 +1,18 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { Image, StyleSheet, Text, View } from 'react-native';
 import { caregiverTheme, patientTheme } from '../theme/tokens-enhanced';
 import type { ThemeName } from './Card';
 
 interface AvatarProps {
   initials: string;
   name: string;
+  avatarImage?: any;
   theme?: ThemeName;
   size?: 'small' | 'medium' | 'large';
   tone?: 'primary' | 'warm' | 'green';
   accessible?: boolean;
 }
 
-export function Avatar({ initials, name, theme = 'caregiver', size = 'medium', tone = 'primary', accessible = true }: AvatarProps) {
+export function Avatar({ initials, name, avatarImage, theme = 'caregiver', size = 'medium', tone = 'primary', accessible = true }: AvatarProps) {
   const tokens = theme === 'caregiver' ? caregiverTheme : patientTheme;
   const dimensions = size === 'large' ? 72 : size === 'small' ? 40 : 52;
   const backgroundColor = tone === 'green'
@@ -35,7 +36,15 @@ export function Avatar({ initials, name, theme = 'caregiver', size = 'medium', t
         { backgroundColor, borderRadius: dimensions / 2, height: dimensions, width: dimensions },
       ]}
     >
-      <Text style={[styles.initials, { color: foregroundColor, fontSize: size === 'large' ? 26 : 16 }]}>{initials}</Text>
+      {avatarImage ? (
+        <Image
+          source={avatarImage}
+          style={{ width: dimensions, height: dimensions, borderRadius: dimensions / 2 }}
+          resizeMode="cover"
+        />
+      ) : (
+        <Text style={[styles.initials, { color: foregroundColor, fontSize: size === 'large' ? 26 : 16 }]}>{initials}</Text>
+      )}
     </View>
   );
 }

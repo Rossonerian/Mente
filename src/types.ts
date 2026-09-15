@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import type { ReactNode } from "react";
 
 export type AppRole = 'caregiver' | 'patient';
 
@@ -31,6 +31,7 @@ export interface FamilyMember {
   initials: string;
   memory: string;
   voiceAvailable: boolean;
+  avatar?: any;
 }
 
 export interface PatientProfile {

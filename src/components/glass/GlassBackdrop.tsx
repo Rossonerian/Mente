@@ -7,7 +7,7 @@ export function GlassBackdrop({ children, theme, style }: GlassBackdropProps) {
   const palette = getGlassPalette(theme);
 
   return (
-    <View style={[styles.container, { backgroundColor: palette.backdropColor }, style]}>
+    <View style={[styles.container, { backgroundColor: 'transparent' }, style]}>
       <GlassBackdropScene theme={theme} />
       <View style={styles.content}>{children}</View>
     </View>

@@ -12,7 +12,7 @@ export function MemberCard({ member, theme = 'caregiver' }: { member: FamilyMemb
 
   return (
     <View accessible accessibilityRole="text" accessibilityLabel={accessibleLabel} style={styles.row}>
-      <Avatar initials={member.initials} name={member.name} accessible={false} theme={theme} tone={theme === 'patient' ? 'warm' : 'primary'} />
+      <Avatar initials={member.initials} name={member.name} avatarImage={member.avatar} accessible={false} theme={theme} tone={theme === 'patient' ? 'warm' : 'primary'} />
       <View style={styles.copy}>
         <Text style={[styles.name, { color: tokens.colors.text }]}>{member.name}</Text>
         <Text style={[styles.relationship, { color: tokens.colors.primary }]}>{member.relationship}</Text>
