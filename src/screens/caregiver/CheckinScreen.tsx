@@ -13,6 +13,7 @@ import { useState } from 'react';
 
 export function CheckinScreen({ onNavigate }: { onNavigate: (route: CaregiverRoute) => void }) {
     const { patient, family } = menteMockData;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [_mood, setMood] = useState<'happy' | 'neutral' | 'sad' | null>(null);
     const [sessionStarted, setSessionStarted] = useState(false);
 

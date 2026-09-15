@@ -179,7 +179,7 @@ def _request_json(
         raise RuntimeError(f"Local API request failed with status {exc.code}") from exc
     except (URLError, json.JSONDecodeError, UnicodeDecodeError) as exc:
         raise RuntimeError("Local API request failed") from exc
-    if not isinstance(payload, (dict, list)):
+    if not isinstance(payload, dict | list):
         raise RuntimeError("Local API returned an unexpected response")
     return payload
 

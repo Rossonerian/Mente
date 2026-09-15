@@ -79,7 +79,7 @@ describe('PatientInGameScreen Core Loop', () => {
     
     // First prompt verified
     const texts = root.findAllByType(Text).map((t: any) => {
-        try { return t.props.children } catch(e) { return null }
+        try { return t.props.children } catch { return null }
     });
     expect(texts).toContain('Memory 1');
     expect(texts).toContain('Prompt 1');
@@ -92,7 +92,7 @@ describe('PatientInGameScreen Core Loop', () => {
 
     // After skip, second prompt should be retrieved
     const textsAfter = root.findAllByType(Text).map((t: any) => {
-        try { return t.props.children } catch(e) { return null }
+        try { return t.props.children } catch { return null }
     });
     expect(textsAfter).toContain('Memory 2');
     expect(textsAfter).toContain('Prompt 2');
