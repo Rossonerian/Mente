@@ -23,8 +23,13 @@ export function FamilyScreen({ onNavigate }: { onNavigate: (route: CaregiverRout
 
             {family.map((member) => (
                 <SurfaceCard key={member.id} theme="caregiver" style={styles.memberCard}>
-                    <View style={styles.memberHeader}>
-                        <Avatar initials={member.initials} name={member.name} size="large" theme="caregiver" tone="primary" />
+                    <View
+                        style={styles.memberHeader}
+                        accessible
+                        accessibilityRole="text"
+                        accessibilityLabel={`${member.name}, ${member.relation}${member.voiceAvailable ? '. Voice available' : ''}`}
+                    >
+                        <Avatar initials={member.initials} name={member.name} size="large" theme="caregiver" tone="primary" accessible={false} />
                         <View style={styles.memberInfo}>
                             <Text style={styles.memberName}>{member.name}</Text>
                             <Text style={styles.memberRelation}>{member.relation}</Text>
@@ -35,15 +40,15 @@ export function FamilyScreen({ onNavigate }: { onNavigate: (route: CaregiverRout
                     <Text style={styles.memberBio}>{member.bio || 'No bio added yet'}</Text>
 
                     <View style={styles.memberStats}>
-                        <View style={styles.stat}>
+                        <View style={styles.stat} accessible accessibilityRole="text" accessibilityLabel={`${member.memoriesCount || 0} Memories`}>
                             <Text style={styles.statValue}>{member.memoriesCount || 0}</Text>
                             <Text style={styles.statLabel}>Memories</Text>
                         </View>
-                        <View style={styles.stat}>
+                        <View style={styles.stat} accessible accessibilityRole="text" accessibilityLabel={`${member.sessionsCount || 0} Sessions`}>
                             <Text style={styles.statValue}>{member.sessionsCount || 0}</Text>
                             <Text style={styles.statLabel}>Sessions</Text>
                         </View>
-                        <View style={styles.stat}>
+                        <View style={styles.stat} accessible accessibilityRole="text" accessibilityLabel={`${member.messagesCount || 0} Messages`}>
                             <Text style={styles.statValue}>{member.messagesCount || 0}</Text>
                             <Text style={styles.statLabel}>Messages</Text>
                         </View>
