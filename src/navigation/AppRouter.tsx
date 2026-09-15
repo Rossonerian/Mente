@@ -32,11 +32,12 @@ export function AppRouter() {
   const [showRegistration, setShowRegistration] = useState(false);
   const [patientToken, setPatientToken] = useState<string | null>(null);
   const [patientDeviceLoading, setPatientDeviceLoading] = useState(true);
+  const [patientDeviceError, setPatientDeviceError] = useState(false);
   const [activeGame, setActiveGame] = useState<{ patientToken: string | null; session: PatientSessionDto; memories: MemoryDto[] } | null>(null);
 
   useEffect(() => {
     let active = true;
-    patientDeviceStore.getToken().then((token) => { if (active) setPatientToken(token); }).finally(() => { if (active) setPatientDeviceLoading(false); });
+    patientDeviceStore.getToken().then((token) => { if (active) setPatientToken(token); }).catch((err) => { console.error("Failed to load token", err); if (active) setPatientDeviceError(true); }).finally(() => { if (active) setPatientDeviceLoading(false); });
     return () => { active = false; };
   }, []);
 
@@ -93,6 +94,7 @@ export function AppRouter() {
   }
 
   if (!isDevelopmentMockMode && patientDeviceLoading) return <AppShell role="patient" tabs={patientTabs} activeRoute="play" onNavigate={() => undefined} onSwitchRole={switchRole} showTabs={false} showPreviewBar={isDevelopmentBuild}><ConnectedFeatureState role="patient" title="Preparing this device" body="Checking whether this device is connected to a family…" /></AppShell>;
+  if (!isDevelopmentMockMode && patientDeviceError) return <AppShell role="patient" tabs={patientTabs} activeRoute="play" onNavigate={() => undefined} onSwitchRole={switchRole} showTabs={false} showPreviewBar={isDevelopmentBuild}><ConnectedFeatureState role="patient" title="Device Error" body="There was a problem preparing this device. Please restart the app or contact your caregiver." /></AppShell>;
   if (!isDevelopmentMockMode && !patientToken) return <AppShell role="patient" tabs={patientTabs} activeRoute="play" onNavigate={() => undefined} onSwitchRole={switchRole} showTabs={false} showPreviewBar={isDevelopmentBuild}><PatientDeviceAccessScreen onBound={() => { void patientDeviceStore.getToken().then(setPatientToken); }} /></AppShell>;
 
   const showTabs = isPatientTabRoute(route) && !hidesPatientTabs(route);
