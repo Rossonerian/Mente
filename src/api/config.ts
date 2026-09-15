@@ -23,14 +23,17 @@ export function getApiBaseUrl(): string {
   }
   try {
     const url = new URL(apiBaseUrl);
-    if (url.protocol !== 'https:' && !(url.protocol === 'http:' && ['localhost', '127.0.0.1'].includes(url.hostname))) {
+    // Development builds may call the local machine over a private-network
+    // address (for example, when testing the web app from a phone). Release
+    // bundles must always use HTTPS.
+    if (url.protocol !== 'https:' && !(url.protocol === 'http:' && (__DEV__ || ['localhost', '127.0.0.1'].includes(url.hostname)))) {
       throw new Error('Unsupported URL protocol');
     }
     return apiBaseUrl.replace(/\/$/, '');
   } catch {
     throw new ApiError({
       kind: 'configuration',
-      message: 'EXPO_PUBLIC_API_BASE_URL must be an HTTPS URL or a localhost HTTP URL.',
+      message: 'EXPO_PUBLIC_API_BASE_URL must be an HTTPS URL, or an HTTP URL in development.',
     });
   }
 }
