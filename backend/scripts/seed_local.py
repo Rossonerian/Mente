@@ -56,7 +56,7 @@ def main() -> int:
         "POST",
         f"{api_base_url}/auth/profile",
         headers,
-        {"display_name": "Local Demo Caregiver"},
+        {"display_name": "Asha Mehta (Demo Caregiver)"},
         ok={200, 201},
     )
     families = _request_json("GET", f"{api_base_url}/families", headers)
@@ -66,7 +66,7 @@ def main() -> int:
             "POST",
             f"{api_base_url}/families",
             headers,
-            {"name": "Local Demo Family", "mode": "SOLO"},
+            {"name": "Mehta Family (Demo)", "mode": "SOLO"},
         )
 
     family_id = family["id"]
@@ -78,7 +78,9 @@ def main() -> int:
             f"{api_base_url}/families/{family_id}/patients",
             headers,
             {
-                "preferred_name": "Local Demo Patient",
+                "preferred_name": "Rosa",
+                "legal_name": "Rosa Delgado (Demo BOT)",
+                "phone_e164": "+15555550123",
                 "timezone": "Asia/Kolkata",
                 "preferred_language": "en-IN",
             },
@@ -87,20 +89,18 @@ def main() -> int:
     patient_id = patient["id"]
     memories = _request_json("GET", f"{api_base_url}/patients/{patient_id}/memories", headers)
     if not memories:
-        _request_json(
-            "POST",
-            f"{api_base_url}/patients/{patient_id}/memories",
-            headers,
-            {
-                "memory_type": "PERSON",
-                "subject_name": "Local Demo Relative",
-                "relationship_label": "family",
-                "prompt_text": "Who is the local demo relative?",
-                "accepted_answers": ["Local Demo Relative"],
-                "consent_recorded_at": datetime.now(timezone.utc).isoformat(),
-                "active": True,
-            },
-        )
+        consented_at = datetime.now(timezone.utc).isoformat()
+        for memory in (
+            {"memory_type": "PERSON", "subject_name": "Asha Mehta", "relationship_label": "daughter", "prompt_text": "Who is Asha, your daughter?", "accepted_answers": ["Asha", "Asha Mehta"]},
+            {"memory_type": "STORY", "subject_name": "Begusarai", "relationship_label": "hometown", "prompt_text": "Which city feels like home?", "accepted_answers": ["Begusarai"]},
+            {"memory_type": "MILESTONE", "subject_name": "Walking", "relationship_label": "favourite hobby", "prompt_text": "What is a familiar hobby you enjoy?", "accepted_answers": ["Walking", "A walk"]},
+        ):
+            _request_json(
+                "POST",
+                f"{api_base_url}/patients/{patient_id}/memories",
+                headers,
+                {**memory, "consent_recorded_at": consented_at, "active": True},
+            )
 
     # Do not print credentials or access tokens. IDs are synthetic and useful
     # for following the local smoke-test instructions.
@@ -132,7 +132,7 @@ def _ensure_auth_user(base_url: str, service_key: str, email: str, password: str
             "email": email,
             "password": password,
             "email_confirm": True,
-            "user_metadata": {"display_name": "Local Demo Caregiver"},
+            "user_metadata": {"display_name": "Asha Mehta (Demo Caregiver)"},
         },
     )
 
