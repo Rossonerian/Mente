@@ -1,3 +1,4 @@
+import { Alert } from 'react-native';
 import { StyleSheet, Text, View } from 'react-native';
 import { PageHeader } from '../../components/PageHeader';
 import { ScreenScroll } from '../../components/Screen';
@@ -114,8 +115,8 @@ export function CheckinScreen({ onNavigate }: { onNavigate: (route: CaregiverRou
 
                     {/* SESSION CONTROLS */}
                     <View style={styles.controlsRow}>
-                        <MenteButton label="Share Photo" onPress={() => { }} variant="secondary" theme="caregiver" style={styles.controlButton} />
-                        <MenteButton label="Play Memory" onPress={() => { }} variant="secondary" theme="caregiver" style={styles.controlButton} />
+                        <MenteButton label="Share Photo" onPress={() => Alert.alert('Coming Soon', 'This feature is currently under development.')} variant="secondary" theme="caregiver" style={styles.controlButton} />
+                        <MenteButton label="Play Memory" onPress={() => Alert.alert('Coming Soon', 'This feature is currently under development.')} variant="secondary" theme="caregiver" style={styles.controlButton} />
                     </View>
 
                     {/* END SESSION */}
