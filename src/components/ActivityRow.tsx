@@ -1,10 +1,15 @@
+import { memo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { caregiverTheme, spacing } from '../theme/tokens-enhanced';
 import type { CognitiveSession } from '../types';
 import { MenteIcon } from './Icon';
 import { StatusPill } from './StatusPill';
 
-export function ActivityRow({ session }: { session: CognitiveSession }) {
+/**
+ * Optimized with React.memo to prevent unnecessary re-renders when parent list components
+ * (like ActivityHistoryScreen or CaregiverHistoryScreen) re-render.
+ */
+export const ActivityRow = memo(function ActivityRow({ session }: { session: CognitiveSession }) {
   const iconBgColor = session.source === 'CALL' ? caregiverTheme.colors.surfaceMuted : caregiverTheme.colors.forestSoft;
   const iconColor = session.source === 'CALL' ? caregiverTheme.colors.primary : caregiverTheme.colors.stable;
 
@@ -39,7 +44,7 @@ export function ActivityRow({ session }: { session: CognitiveSession }) {
       </View>
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   row: {
