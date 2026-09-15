@@ -6,8 +6,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MenteButton } from '../../components/Button';
 import { Text } from 'react-native';
 
-const mockFinalize = jest.fn().mockResolvedValue({});
-const mockMetric = jest.fn().mockResolvedValue({});
+const mockFinalize = jest.fn<any>().mockResolvedValue({});
+const mockMetric = jest.fn<any>().mockResolvedValue({});
 
 jest.mock('../../features/patient/usePatientSession', () => ({
   createSkippedGameMetric: jest.fn(() => ({ type: 'mocked-metric' })),
@@ -36,8 +36,8 @@ jest.mock('../../api/adapters/caregiverFamily', () => ({
 
 jest.mock('../../auth/patientDeviceStore', () => ({
   patientDeviceStore: {
-    removePendingWrite: jest.fn().mockResolvedValue(undefined),
-    setPendingWrite: jest.fn().mockResolvedValue(undefined),
+    removePendingWrite: jest.fn<any>().mockResolvedValue(undefined),
+    setPendingWrite: jest.fn<any>().mockResolvedValue(undefined),
   }
 }));
 

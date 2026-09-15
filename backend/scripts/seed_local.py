@@ -91,9 +91,27 @@ def main() -> int:
     if not memories:
         consented_at = datetime.now(timezone.utc).isoformat()
         for memory in (
-            {"memory_type": "PERSON", "subject_name": "Asha Mehta", "relationship_label": "daughter", "prompt_text": "Who is Asha, your daughter?", "accepted_answers": ["Asha", "Asha Mehta"]},
-            {"memory_type": "STORY", "subject_name": "Begusarai", "relationship_label": "hometown", "prompt_text": "Which city feels like home?", "accepted_answers": ["Begusarai"]},
-            {"memory_type": "MILESTONE", "subject_name": "Walking", "relationship_label": "favourite hobby", "prompt_text": "What is a familiar hobby you enjoy?", "accepted_answers": ["Walking", "A walk"]},
+            {
+                "memory_type": "PERSON",
+                "subject_name": "Asha Mehta",
+                "relationship_label": "daughter",
+                "prompt_text": "Who is Asha, your daughter?",
+                "accepted_answers": ["Asha", "Asha Mehta"],
+            },
+            {
+                "memory_type": "STORY",
+                "subject_name": "Begusarai",
+                "relationship_label": "hometown",
+                "prompt_text": "Which city feels like home?",
+                "accepted_answers": ["Begusarai"],
+            },
+            {
+                "memory_type": "MILESTONE",
+                "subject_name": "Walking",
+                "relationship_label": "favourite hobby",
+                "prompt_text": "What is a familiar hobby you enjoy?",
+                "accepted_answers": ["Walking", "A walk"],
+            },
         ):
             _request_json(
                 "POST",
