@@ -111,10 +111,12 @@ def test_verifier_rejects_a_non_uuid_subject_even_when_the_signature_is_valid() 
         {
             "aud": "authenticated",
             "email": "ana@example.com",
-            "exp": datetime.now(timezone.utc) + timedelta(minutes=5),
+            "exp": int((datetime.now(timezone.utc) + timedelta(minutes=5)).timestamp()),
+            "iat": int(datetime.now(timezone.utc).timestamp()),
             "iss": "https://mente-test.supabase.co/auth/v1",
             "role": "authenticated",
             "sub": "not-a-supabase-user-id",
+            "session_id": "81d1a67f-a892-4ef1-b06d-489c69b455d0",
         },
         private_key,
         algorithm="RS256",
@@ -137,10 +139,12 @@ def _signed_token(private_key, **overrides):
     payload = {
         "aud": "authenticated",
         "email": "ana@example.com",
-        "exp": datetime.now(timezone.utc) + timedelta(minutes=5),
+        "exp": int((datetime.now(timezone.utc) + timedelta(minutes=5)).timestamp()),
+        "iat": int(datetime.now(timezone.utc).timestamp()),
         "iss": "https://mente-test.supabase.co/auth/v1",
         "role": "authenticated",
         "sub": "71d1a67f-a892-4ef1-b06d-489c69b455d0",
+        "session_id": "81d1a67f-a892-4ef1-b06d-489c69b455d0",
     }
     payload.update(overrides)
     return encode(payload, private_key, algorithm="RS256", headers={"kid": "test"})
